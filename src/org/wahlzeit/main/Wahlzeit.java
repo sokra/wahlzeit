@@ -20,28 +20,80 @@
 
 package org.wahlzeit.main;
 
-import org.wahlzeit.services.*;
+import org.wahlzeit.agents.AgentsModule;
+import org.wahlzeit.handlers.HandlersModule;
+import org.wahlzeit.model.EnglishModelConfig;
+import org.wahlzeit.model.GermanModelConfig;
+import org.wahlzeit.model.GlobalsPersistance;
+import org.wahlzeit.model.ModelConfig;
+import org.wahlzeit.model.ModelModule;
+import org.wahlzeit.model.Saveable;
+import org.wahlzeit.services.Language;
+import org.wahlzeit.webparts.WebPartsModule;
+
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.Scopes;
+import com.google.inject.multibindings.MapBinder;
+import com.google.inject.multibindings.Multibinder;
+import com.google.inject.name.Names;
 
 /**
  * 
  * @author dirkriehle
  *
  */
-public class Wahlzeit extends ServerMain {
-
-	/**
-	 * 
-	 */
-	public static void main(String[] argv) {
-		instance = new Wahlzeit();
-		instance.run(argv);
+public class Wahlzeit extends MainModule {
+	
+	public Wahlzeit(boolean production) {
+		super(production);
 	}
 
 	/**
 	 * 
 	 */
-	protected SysConfig createProdSysConfig() {
-		return new SysConfig("flowers.wahlzeit.com");
+	public static void main(String[] argv) {
+		boolean isInProductionFlag = false;
+		
+		for (int i = 0; i < argv.length; i++) {
+			String arg = argv[i];
+			if (arg.equals("-P") || arg.equals("--production")) {
+				isInProductionFlag = true;
+			} else if (arg.equals("-D") || arg.equals("--development")) {
+				isInProductionFlag = false;
+			}
+		}		
+
+		Injector injector = Guice.createInjector(new Wahlzeit(isInProductionFlag));
+		
+		injector.getInstance(Main.class).run(); 
+	}
+
+	@Override
+	protected void configure() {
+		super.configure();
+
+		install(new ModelModule());
+		install(new AgentsModule());
+		install(new WebPartsModule());
+		install(new HandlersModule());
+
+		bind(ServerMain.class).in(Scopes.SINGLETON);
+		bind(Main.class).to(ServerMain.class);
+		bind(Boolean.class).annotatedWith(Names.named("production")).toInstance(production);
+		if(production) {
+			bind(String.class).annotatedWith(Names.named("host")).toInstance("flowers.wahlzeit.com");
+			bind(String.class).annotatedWith(Names.named("port")).toInstance("80");
+		} else {
+			bind(String.class).annotatedWith(Names.named("host")).toInstance("localhost");
+			bind(String.class).annotatedWith(Names.named("port")).toInstance("8585");
+		}
+		
+		Multibinder.newSetBinder(binder(), Saveable.class).addBinding().to(GlobalsPersistance.class);
+		
+		MapBinder<Language, ModelConfig> languageModelBinder = MapBinder.newMapBinder(binder(), Language.class, ModelConfig.class);
+		languageModelBinder.addBinding(Language.ENGLISH).to(EnglishModelConfig.class).in(Scopes.SINGLETON);
+		languageModelBinder.addBinding(Language.GERMAN).to(GermanModelConfig.class).in(Scopes.SINGLETON);
 	}
 
 }

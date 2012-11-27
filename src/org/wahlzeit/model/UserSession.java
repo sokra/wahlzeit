@@ -20,10 +20,20 @@
 
 package org.wahlzeit.model;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
-import org.wahlzeit.services.*;
-import org.wahlzeit.utils.*;
+import javax.inject.Inject;
+
+import org.wahlzeit.services.EmailAddress;
+import org.wahlzeit.services.Language;
+import org.wahlzeit.services.Session;
+import org.wahlzeit.utils.HtmlUtil;
+import org.wahlzeit.utils.StringUtil;
+
+import com.google.inject.Injector;
 
 /**
  * 
@@ -31,6 +41,12 @@ import org.wahlzeit.utils.*;
  *
  */
 public class UserSession extends Session {
+	
+	@Inject
+	protected PhotoFactory photoFactory;
+	
+	@Inject
+	protected LanguageConfigs languageConfigs;
 
 	/**
 	 * 
@@ -45,13 +61,13 @@ public class UserSession extends Session {
 	/**
 	 * Session state
 	 */
-	protected ModelConfig configuration = LanguageConfigs.get(Language.ENGLISH);
+	protected ModelConfig configuration;
 
 	protected Client client = new Guest();
 	protected PhotoSize photoSize = PhotoSize.MEDIUM;
 	protected long confirmationCode = -1; // -1 means not set
-	protected PhotoFilter photoFilter = PhotoFactory.getInstance().createPhotoFilter();
-	protected Set praisedPhotos = new HashSet<Photo>();
+	protected PhotoFilter photoFilter;
+	protected Set<Photo> praisedPhotos = new HashSet<Photo>();
 
 	/**
 	 * Transaction state
@@ -61,15 +77,22 @@ public class UserSession extends Session {
 	/**
 	 * 
 	 */
-	public UserSession(String ctxName) {
-		initialize(ctxName);
+	@Inject
+	protected UserSession() {
+	}
+	
+	@Override
+	protected void initialize(String ctxName) {
+		super.initialize(ctxName);
+		configuration = languageConfigs.get(Language.ENGLISH);
+		photoFilter = photoFactory.createPhotoFilter();
 	}
 	
 	/**
 	 * 
 	 */
 	public void clear() {
-		configuration = LanguageConfigs.get(Language.ENGLISH);
+		configuration = languageConfigs.get(Language.ENGLISH);
 		photoSize = PhotoSize.MEDIUM;
 		clearDisplayedPhotos();
 		clearPraisedPhotos();
@@ -136,7 +159,7 @@ public class UserSession extends Session {
 		if (client != null) {
 			client.setEmailAddress(emailAddress);
 		} else {
-			SysLog.logError("attempted to set email address to null client");
+			sysLog.logError("attempted to set email address to null client");
 		}
 	}
 	
@@ -352,7 +375,7 @@ public class UserSession extends Session {
 	/**
 	 * 
 	 */
-	public boolean isFormType(Map args, String type) {
+	public boolean isFormType(Map<String, ?> args, String type) {
 		Object value = args.get(type);
 		return (value != null) && !value.equals("");
 	}
@@ -360,7 +383,7 @@ public class UserSession extends Session {
 	/**
 	 * 
 	 */
-	public String getAsString(Map args, String key) {
+	public String getAsString(Map<String, ?> args, String key) {
 		String result = null;
 		
 		Object value = args.get(key);
@@ -381,10 +404,23 @@ public class UserSession extends Session {
 	/**
 	 * 
 	 */
-	public String getAndSaveAsString(Map args, String key) {
+	public String getAndSaveAsString(Map<String, ?> args, String key) {
 		String result = getAsString(args, key);
 		savedArgs.put(key, result);
 		return result;
+	}
+
+	public static class Factory {
+		
+		@Inject
+		protected Injector injector;
+		
+		public UserSession create(String ctxName) {
+			UserSession session = injector.getInstance(UserSession.class);
+			session.initialize(ctxName);
+			return session;
+		}
+		
 	}
 	
 }

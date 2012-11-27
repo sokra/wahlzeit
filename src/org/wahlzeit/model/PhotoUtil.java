@@ -20,12 +20,18 @@
 
 package org.wahlzeit.model;
 
-import java.io.*;
-import java.awt.*;
-import java.awt.image.*;
-import javax.imageio.*;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.RenderingHints;
+import java.awt.image.BufferedImage;
+import java.io.File;
 
-import org.wahlzeit.services.*;
+import javax.imageio.ImageIO;
+import javax.inject.Inject;
+
+import org.wahlzeit.services.SysConfig;
+import org.wahlzeit.services.SysLog;
 
 /**
  * PhotoUtil provides a set of utility functions to create defined images.
@@ -36,11 +42,24 @@ import org.wahlzeit.services.*;
  */
 public class PhotoUtil {
 	
+	@Inject
+	protected SysLog sysLog;
+	
+	@Inject
+	protected SysConfig sysConfig;
+	
+	private final PhotoFactory photoFactory;
+
+	@Inject
+	public PhotoUtil(PhotoFactory photoFactory) {
+		this.photoFactory = photoFactory;
+	}
+	
 	/**
 	 * 
 	 */
-	public static Photo createPhoto(File source, PhotoId id) throws Exception {
-		Photo result = PhotoFactory.getInstance().createPhoto(id);
+	public Photo createPhoto(File source, PhotoId id) throws Exception {
+		Photo result = photoFactory.createPhoto(id);
 		
 		Image sourceImage = createImageFiles(source, id);
 
@@ -54,7 +73,7 @@ public class PhotoUtil {
 	/**
 	 * 
 	 */
-	public static Image createImageFiles(File source, PhotoId id) throws Exception {
+	public Image createImageFiles(File source, PhotoId id) throws Exception {
 		Image sourceImage = ImageIO.read(source);
 		assertIsValidImage(sourceImage);
 
@@ -74,7 +93,7 @@ public class PhotoUtil {
 	/**
 	 * 
 	 */
-	protected static void createImageFile(Image source, PhotoId id, PhotoSize size) throws Exception {	
+	protected void createImageFile(Image source, PhotoId id, PhotoSize size) throws Exception {	
 		int sourceWidth = source.getWidth(null);
 		int sourceHeight = source.getHeight(null);
 		
@@ -82,16 +101,16 @@ public class PhotoUtil {
 		int targetHeight = size.calcAdjustedHeight(sourceWidth, sourceHeight);
 
 		BufferedImage targetImage = scaleImage(source, targetWidth, targetHeight);
-		File target = new File(SysConfig.getPhotosDirAsString() + id.asString() + size.asInt() + ".jpg");
+		File target = new File(sysConfig.getPhotosDirAsString() + id.asString() + size.asInt() + ".jpg");
 		ImageIO.write(targetImage, "jpg", target);
 
-		SysLog.logInfo("created image file for id: " + id.asString() + " of size: " + size.asString());
+		sysLog.logInfo("created image file for id: " + id.asString() + " of size: " + size.asString());
 	}
 
 	/**
 	 * 
 	 */
-	protected static BufferedImage scaleImage(Image source, int width, int height) {
+	protected BufferedImage scaleImage(Image source, int width, int height) {
 		source = source.getScaledInstance(width, height, Image.SCALE_SMOOTH);
 		BufferedImage result = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
 		Graphics2D g2d = result.createGraphics();
@@ -104,7 +123,7 @@ public class PhotoUtil {
 	/**
 	 * @methodtype assertion 
 	 */
-	protected static void assertIsValidImage(Image image) {
+	protected void assertIsValidImage(Image image) {
 		if (image == null) {
 			throw new IllegalArgumentException("Not a valid photo!");
 		}
@@ -113,7 +132,7 @@ public class PhotoUtil {
 	/**
 	 * 
 	 */
-	protected static void assertHasValidSize(int cw, int ch) {
+	protected void assertHasValidSize(int cw, int ch) {
 		if (PhotoSize.THUMB.isWiderAndHigher(cw, ch)) {
 			throw new IllegalArgumentException("Photo too small!");
 		}

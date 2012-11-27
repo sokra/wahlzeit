@@ -20,11 +20,16 @@
 
 package org.wahlzeit.model;
 
-import java.net.*;
-import java.text.*;
+import java.net.URL;
+import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 
-import org.wahlzeit.services.*;
-import org.wahlzeit.utils.*;
+import javax.inject.Inject;
+import javax.inject.Named;
+
+import org.wahlzeit.services.FileUtil;
+import org.wahlzeit.services.Language;
+import org.wahlzeit.utils.HtmlUtil;
 
 /**
  * A model configuration for the German language.
@@ -37,7 +42,10 @@ public class GermanModelConfig extends AbstractModelConfig {
 	/**
 	 * 
 	 */
-	public GermanModelConfig() {
+	@Inject
+	public GermanModelConfig(@Named("production") boolean isInProductionMode, FileUtil fileUtil) {
+		super(isInProductionMode, fileUtil);
+		
 		DecimalFormat praiseFormatter = new DecimalFormat("##,##");
 		praiseFormatter.setMinimumFractionDigits(2);
 		

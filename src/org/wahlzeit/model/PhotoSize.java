@@ -20,7 +20,7 @@
 
 package org.wahlzeit.model;
 
-import org.wahlzeit.utils.*;
+import org.wahlzeit.utils.EnumValue;
 
 /**
  * The PhotoSize class defines the sizes in which a Photo can come.

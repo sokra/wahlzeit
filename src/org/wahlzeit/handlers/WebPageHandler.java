@@ -20,8 +20,8 @@
 
 package org.wahlzeit.handlers;
 
-import org.wahlzeit.model.*;
-import org.wahlzeit.webparts.*;
+import org.wahlzeit.model.UserSession;
+import org.wahlzeit.webparts.WebPart;
 
 
 /**

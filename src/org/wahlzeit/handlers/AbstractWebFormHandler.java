@@ -20,11 +20,11 @@
 
 package org.wahlzeit.handlers;
 
-import java.util.*;
+import java.util.Map;
 
-import org.wahlzeit.model.*;
-import org.wahlzeit.services.*;
-import org.wahlzeit.webparts.*;
+import org.wahlzeit.model.AccessRights;
+import org.wahlzeit.model.UserSession;
+import org.wahlzeit.webparts.WebPart;
 
 
 /**
@@ -58,21 +58,21 @@ public abstract class AbstractWebFormHandler extends AbstractWebPartHandler impl
 	/**
 	 * @methodtype boolean-query
 	 */
-	protected boolean isWellFormedPost(UserSession ctx, Map args) {
+	protected boolean isWellFormedPost(UserSession ctx, Map<String, ?> args) {
 		return true;
 	}
 
 	/**
 	 * 
 	 */
-	public final String handlePost(UserSession ctx, Map args) {
+	public final String handlePost(UserSession ctx, Map<String, ?> args) {
 		if (!hasAccessRights(ctx, args)) {
-			SysLog.logInfo("insufficient rights for POST from: " + ctx.getEmailAddressAsString());
+			sysLog.logInfo("insufficient rights for POST from: " + ctx.getEmailAddressAsString());
 			return getIllegalAccessErrorPage(ctx);
 		}
 		
 		if (!isWellFormedPost(ctx, args)) {
-			SysLog.logInfo("received ill-formed POST from: " + ctx.getEmailAddressAsString());
+			sysLog.logInfo("received ill-formed POST from: " + ctx.getEmailAddressAsString());
 			return getIllegalArgumentErrorPage(ctx);
 		}
 		
@@ -80,7 +80,7 @@ public abstract class AbstractWebFormHandler extends AbstractWebPartHandler impl
 			// may throw Exception
 			return doHandlePost(ctx, args);
 		} catch (Throwable t) {
-			SysLog.logThrowable(t);
+			sysLog.logThrowable(t);
 			return getInternalProcessingErrorPage(ctx);
 		}
 	}
@@ -88,7 +88,7 @@ public abstract class AbstractWebFormHandler extends AbstractWebPartHandler impl
 	/**
 	 * 
 	 */
-	protected String doHandlePost(UserSession ctx, Map args) {
+	protected String doHandlePost(UserSession ctx, Map<String, ?> args) {
 		return PartUtil.DEFAULT_PAGE_NAME;
 	}
 	

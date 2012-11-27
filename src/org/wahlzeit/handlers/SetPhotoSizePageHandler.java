@@ -20,7 +20,7 @@
 
 package org.wahlzeit.handlers;
 
-import java.util.*;
+import java.util.Map;
 
 import org.wahlzeit.model.AccessRights;
 import org.wahlzeit.model.PhotoSize;
@@ -40,14 +40,14 @@ public class SetPhotoSizePageHandler extends AbstractWebPageHandler {
 	/**
 	 * 
 	 */
-	public SetPhotoSizePageHandler() {
+	protected SetPhotoSizePageHandler() {
 		initialize(PartUtil.SHOW_NOTE_PAGE_FILE, AccessRights.GUEST);
 	}
 	
 	/**
 	 * 
 	 */
-	protected String doHandleGet(UserSession ctx, String link, Map args) {
+	protected String doHandleGet(UserSession ctx, String link, Map<String, ?> args) {
 		PhotoSize result = PhotoSize.MEDIUM;
 		
 		if (link.equals(PartUtil.SET_EXTRA_SMALL_PHOTO_SIZE_PAGE_NAME)) {

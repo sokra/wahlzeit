@@ -20,7 +20,7 @@
 
 package org.wahlzeit.model;
 
-import org.wahlzeit.utils.*;
+import org.wahlzeit.utils.EnumValue;
 
 /**
  * The UserStatus of a User denotes its state within the system.

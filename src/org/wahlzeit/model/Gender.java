@@ -20,7 +20,7 @@
 
 package org.wahlzeit.model;
 
-import org.wahlzeit.utils.*;
+import org.wahlzeit.utils.EnumValue;
 
 /**
  * The gender denotes some user's/person's/character's/whatever gender.

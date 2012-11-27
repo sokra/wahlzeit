@@ -20,9 +20,14 @@
 
 package org.wahlzeit.handlers;
 
-import org.wahlzeit.model.*;
-import org.wahlzeit.utils.*;
-import org.wahlzeit.webparts.*;
+import org.wahlzeit.model.AccessRights;
+import org.wahlzeit.model.Photo;
+import org.wahlzeit.model.User;
+import org.wahlzeit.model.UserSession;
+import org.wahlzeit.utils.HtmlUtil;
+import org.wahlzeit.webparts.WebPart;
+import org.wahlzeit.webparts.Writable;
+import org.wahlzeit.webparts.WritableList;
 
 /**
  * 
@@ -34,7 +39,7 @@ public class ShowUserHomePageHandler extends AbstractWebPageHandler {
 	/**
 	 *
 	 */
-	public ShowUserHomePageHandler() {
+	protected ShowUserHomePageHandler() {
 		initialize(PartUtil.SHOW_USER_HOME_PAGE_FILE, AccessRights.USER);
 	}
 

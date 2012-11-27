@@ -20,7 +20,9 @@
 
 package org.wahlzeit.handlers;
 
-import java.util.*;
+import java.util.Map;
+
+import javax.inject.Inject;
 
 import org.wahlzeit.model.AccessRights;
 import org.wahlzeit.model.User;
@@ -41,10 +43,19 @@ import org.wahlzeit.webparts.WebPart;
  */
 public class EmailPasswordFormHandler extends AbstractWebFormHandler {
 	
+	@Inject
+	protected UserLog userLog;
+	
+	@Inject
+	protected UserManager userManager;
+	
+	@Inject
+	protected EmailServer emailServer;
+	
 	/**
 	 *
 	 */
-	public EmailPasswordFormHandler() {
+	protected EmailPasswordFormHandler() {
 		initialize(PartUtil.EMAIL_PASSWORD_FORM_FILE, AccessRights.GUEST);
 	}
 
@@ -60,9 +71,7 @@ public class EmailPasswordFormHandler extends AbstractWebFormHandler {
 	/**
 	 * 
 	 */
-	protected String doHandlePost(UserSession ctx, Map args) {
-		UserManager userManager = UserManager.getInstance();	
-
+	protected String doHandlePost(UserSession ctx, Map<String, ?> args) {
 		String userName = ctx.getAndSaveAsString(args, User.NAME);
 		if (StringUtil.isNullOrEmptyString(userName)) {
 			ctx.setMessage(ctx.cfg().getFieldIsMissing());
@@ -74,12 +83,11 @@ public class EmailPasswordFormHandler extends AbstractWebFormHandler {
 		
 		User user = userManager.getUserByName(userName);
 		
-		EmailServer emailServer = EmailServer.getInstance();
 		EmailAddress from = ctx.cfg().getModeratorEmailAddress();
 		EmailAddress to = user.getEmailAddress();
 		emailServer.sendEmail(from, to, ctx.cfg().getAuditEmailAddress(), ctx.cfg().getSendPasswordEmailSubject(), user.getPassword());
 
-		UserLog.logPerformedAction("EmailPassword");
+		userLog.logPerformedAction("EmailPassword");
 		
 		ctx.setTwoLineMessage(ctx.cfg().getPasswordWasEmailed(), ctx.cfg().getContinueWithShowPhoto());
 

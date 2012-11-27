@@ -20,35 +20,41 @@
 
 package org.wahlzeit.tools;
 
-import java.sql.*;
-import org.wahlzeit.services.*;
-import org.wahlzeit.main.*;
+import java.sql.Connection;
+import java.sql.Statement;
+
+import javax.inject.Inject;
+import javax.inject.Named;
+
+import org.wahlzeit.main.AbstractMain;
+import org.wahlzeit.main.Main;
+import org.wahlzeit.main.MainModule;
+import org.wahlzeit.services.ConfigDir;
+import org.wahlzeit.services.ContextProvider;
+import org.wahlzeit.services.DatabaseConnection;
+import org.wahlzeit.services.FileUtil;
+import org.wahlzeit.services.SysConfig;
+import org.wahlzeit.services.SysLog;
+
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.Scopes;
+import com.google.inject.name.Names;
 
 /**
  * 
  * @author dirkriehle
  *
  */
-public class RunScript extends AbstractMain {
-	
-	/**
-	 * 
-	 */
-	public static void main(String[] argv) {
-		instance = new RunScript();
-		instance.run(argv);
-	}
-	
-	/**
-	 * 
-	 */
-	protected boolean isToRunScript = false;
-	protected String scriptFileName = "dummy";
+public class RunScript extends MainModule {
 
 	/**
 	 * 
 	 */
-	protected void handleArgv(String[] argv) {
+	public static void main(String[] argv) {
+		boolean isToRunScript = false;
+		String scriptFileName = "dummy";
+
 		for (int i = 0; i < argv.length; i++) {
 			String arg = argv[i];
 			if (arg.equals("-S") || arg.equals("--setup")) {
@@ -62,35 +68,78 @@ public class RunScript extends AbstractMain {
 				scriptFileName = argv[i];
 			}
 		}
-	}
 
-	
-	/**
-	 * 
-	 */
-	protected void execute() throws Exception {
-		DatabaseConnection dbc = ContextManager.getDatabaseConnection();
-		Connection conn = dbc.getRdbmsConnection();
+		Injector injector = Guice.createInjector(new RunScript(isToRunScript, scriptFileName));
 		
-		ConfigDir scriptsDir = SysConfig.getScriptsDir();
-		String defaultScriptFileName = scriptsDir.getDefaultConfigFileName(scriptFileName);
-		runScript(conn, defaultScriptFileName);
-			
-		if(scriptsDir.hasCustomFile("CreateTables.sql")) {
-			String customConfigFileName = scriptsDir.getCustomConfigFileName(scriptFileName);
-			runScript(conn, customConfigFileName);
-		}
+		RunScriptMain main = injector.getInstance(RunScriptMain.class);
+		main.run();
+	}
+	
+	public RunScript(boolean isToRunScript, String scriptFileName) {
+		super(false);
+		this.isToRunScript = isToRunScript;
+		this.scriptFileName = scriptFileName;
 	}
 
 	/**
 	 * 
 	 */
-	protected void runScript(Connection conn, String fullFileName) throws Exception {
-		String query = FileUtil.safelyReadFileAsString(fullFileName);
-		SysLog.logQuery(query);
+	protected boolean isToRunScript;
+	protected String scriptFileName;
+	
+	@Override
+	protected void configure() {
+		super.configure();
 
-		Statement stmt = conn.createStatement();
-		stmt.execute(query);
+		bind(Main.class).to(RunScriptMain.class).in(Scopes.SINGLETON);
+		
+		bind(String.class).annotatedWith(Names.named("scriptFileName")).toInstance(scriptFileName);
+	}
+	
+	static class RunScriptMain extends AbstractMain {
+		
+		@Inject
+		protected ContextProvider contextProvider;
+		
+		@Inject
+		protected SysConfig sysConfig;
+		
+		@Inject
+		protected SysLog sysLog;
+		
+		@Inject
+		protected FileUtil fileUtil;
+		
+		@Inject @Named("scriptFileName")
+		protected String scriptFileName;
+	
+		/**
+		 * 
+		 */
+		protected void execute() throws Exception {
+			DatabaseConnection dbc = contextProvider.get().getDatabaseConnection();
+			Connection conn = dbc.getRdbmsConnection();
+			
+			ConfigDir scriptsDir = sysConfig.getScriptsDir();
+			String defaultScriptFileName = scriptsDir.getDefaultConfigFileName(scriptFileName);
+			runScript(conn, defaultScriptFileName);
+				
+			if(scriptsDir.hasCustomFile("CreateTables.sql")) {
+				String customConfigFileName = scriptsDir.getCustomConfigFileName(scriptFileName);
+				runScript(conn, customConfigFileName);
+			}
+		}
+	
+		/**
+		 * 
+		 */
+		protected void runScript(Connection conn, String fullFileName) throws Exception {
+			String query = fileUtil.safelyReadFileAsString(fullFileName);
+			sysLog.logQuery(query);
+	
+			Statement stmt = conn.createStatement();
+			stmt.execute(query);
+		}
 	}
 	
 }

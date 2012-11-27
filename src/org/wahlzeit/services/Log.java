@@ -20,9 +20,12 @@
 
 package org.wahlzeit.services;
 
-import java.io.*;
-import java.sql.*;
-import java.text.*;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.sql.Statement;
+import java.text.DateFormat;
+
+import javax.inject.Inject;
 
 /**
  * Simple logging class; should be replaced with log4j or the like.
@@ -35,12 +38,20 @@ public class Log {
 	/**
 	 * 
 	 */
-	protected static DateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss SSS");
+	protected final DateFormat dateFormatter;
+	
+	protected final ContextProvider contextProvider;
+	
+	@Inject
+	public Log(ContextProvider contextProvider, DateFormat dateFormatter) {
+		this.contextProvider = contextProvider;
+		this.dateFormatter = dateFormatter;
+	}
 
 	/**
 	 * 
 	 */
-	public static void logInfo(String l, String s) {
+	public void logInfo(String l, String s) {
 		StringBuffer sb = createLogEntry(l);
 		addLogType(sb, "info");
 		addField(sb, "info", s);
@@ -50,7 +61,7 @@ public class Log {
 	/**
 	 * 
 	 */
-	public static void logError(String l, String s) {
+	public void logError(String l, String s) {
 		StringBuffer sb = createLogEntry(l);
 		addLogType(sb, "error");
 		addField(sb, "error", s);
@@ -60,7 +71,7 @@ public class Log {
 	/**
 	 * 
 	 */
-	public static void logValue(String level, String type, String value) {
+	public void logValue(String level, String type, String value) {
 		StringBuffer sb = createLogEntry(level);
 		addLogType(sb, "info");
 		addField(sb, type, value);
@@ -70,7 +81,7 @@ public class Log {
 	/**
 	 * 
 	 */
-	public static void logValueWithInfo(String level, String type, String value, String info) {
+	public void logValueWithInfo(String level, String type, String value, String info) {
 		StringBuffer sb = createLogEntry(level);
 		addLogType(sb, "info");
 		addField(sb, type, value);
@@ -81,7 +92,7 @@ public class Log {
 	/**
 	 * 
 	 */
-	public static void logCreatedObject(String level, String type, String object) {
+	public void logCreatedObject(String level, String type, String object) {
 		StringBuffer sb = createLogEntry(level);
 		addLogType(sb, "info");
 		addField(sb, "created", type);
@@ -92,7 +103,7 @@ public class Log {
 	/**
 	 * 
 	 */
-	protected static final StringBuffer createLogEntry(String level) {
+	protected final StringBuffer createLogEntry(String level) {
 		StringBuffer sb = new StringBuffer(256);
 		String date = null;
 		synchronized (dateFormatter) {
@@ -107,15 +118,15 @@ public class Log {
 	/**
 	 * 
 	 */
-	public static final void addField(StringBuffer sb, String type, String field) {
+	public final void addField(StringBuffer sb, String type, String field) {
 		sb.append(", " + type + "=" + field);
 	}
 	
 	/**
 	 * 
 	 */
-	public static final void addContext(StringBuffer sb) {
-		Session ctx = ContextManager.getThreadLocalContext();
+	public final void addContext(StringBuffer sb) {
+		Session ctx = contextProvider.get();
 
 		String id = (ctx != null) ? ctx.getName() : "noctx";
 		addField(sb, "context", id);
@@ -133,21 +144,21 @@ public class Log {
 	/**
 	 * 
 	 */
-	public static final void addLogType(StringBuffer sb, String logType) {
+	public final void addLogType(StringBuffer sb, String logType) {
 		addField(sb, "logtype", logType);
 	}
 	
 	/**
 	 *
 	 */
-	public static final void addThrowable(StringBuffer sb, Throwable t) {
+	public final void addThrowable(StringBuffer sb, Throwable t) {
 		addField(sb, "throwable", t.toString());
 	}
 	
 	/**
 	 * 
 	 */
-	public static final void addStacktrace(StringBuffer sb, Throwable t) {
+	public final void addStacktrace(StringBuffer sb, Throwable t) {
 		StringWriter sw = new StringWriter();
 		t.printStackTrace(new PrintWriter(sw));
 		addField(sb, "stacktrace", sw.toString());
@@ -156,14 +167,14 @@ public class Log {
 	/**
 	 * 
 	 */
-	public static final void addQuery(StringBuffer sb, Statement q) {
+	public final void addQuery(StringBuffer sb, Statement q) {
 		addField(sb, "query", q.toString());
 	}
 
 	/**
 	 * 
 	 */
-	public static final void log(StringBuffer sb) {
+	public final void log(StringBuffer sb) {
 		System.out.println(sb);
 	}
 	

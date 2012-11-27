@@ -20,12 +20,22 @@
 
 package org.wahlzeit.handlers;
 
-import java.util.*;
+import java.util.Map;
 
-import org.wahlzeit.model.*;
-import org.wahlzeit.services.*;
-import org.wahlzeit.utils.*;
-import org.wahlzeit.webparts.*;
+import javax.inject.Inject;
+
+import org.wahlzeit.model.AccessRights;
+import org.wahlzeit.model.FlagReason;
+import org.wahlzeit.model.Photo;
+import org.wahlzeit.model.PhotoCase;
+import org.wahlzeit.model.PhotoCaseManager;
+import org.wahlzeit.model.PhotoManager;
+import org.wahlzeit.model.UserLog;
+import org.wahlzeit.model.UserSession;
+import org.wahlzeit.services.EmailAddress;
+import org.wahlzeit.services.EmailServer;
+import org.wahlzeit.utils.StringUtil;
+import org.wahlzeit.webparts.WebPart;
 
 /**
  * 
@@ -34,17 +44,29 @@ import org.wahlzeit.webparts.*;
  */
 public class FlagPhotoFormHandler extends AbstractWebFormHandler {
 	
+	@Inject
+	protected UserLog userLog;
+	
+	@Inject
+	protected PhotoCaseManager photoCaseManager;
+	
+	@Inject
+	protected PhotoManager photoManager;
+	
+	@Inject
+	protected EmailServer emailServer;
+	
 	/**
 	 *
 	 */
-	public FlagPhotoFormHandler() {
+	protected FlagPhotoFormHandler() {
 		initialize(PartUtil.FLAG_PHOTO_FORM_FILE, AccessRights.GUEST);
 	}
 
 	/**
 	 * 
 	 */
-	protected boolean isWellFormedGet(UserSession ctx, String link, Map args) {
+	protected boolean isWellFormedGet(UserSession ctx, String link, Map<String, ?> args) {
 		return hasSavedPhotoId(ctx) && isSavedPhotoVisible(ctx);
 	}
 
@@ -52,11 +74,11 @@ public class FlagPhotoFormHandler extends AbstractWebFormHandler {
 	 * 
 	 */
 	protected void doMakeWebPart(UserSession ctx, WebPart part) {
-		Map args = ctx.getSavedArgs();
+		Map<String, ?> args = ctx.getSavedArgs();
 		part.addStringFromArgs(args, UserSession.MESSAGE);
 		
 		String id = ctx.getAsString(args, Photo.ID);
-		Photo photo = PhotoManager.getPhoto(id);
+		Photo photo = photoManager.getPhoto(id);
 		part.addString(Photo.ID, id);
 		part.addString(Photo.THUMB, getPhotoThumb(ctx, photo));
 		part.maskAndAddStringFromArgsWithDefault(args, PhotoCase.FLAGGER, ctx.getEmailAddressAsString());
@@ -67,7 +89,7 @@ public class FlagPhotoFormHandler extends AbstractWebFormHandler {
 	/**
 	 * 
 	 */
-	protected String doHandlePost(UserSession ctx, Map args) {
+	protected String doHandlePost(UserSession ctx, Map<String, ?> args) {
 		String id = ctx.getAndSaveAsString(args, Photo.ID);
 		String flagger = ctx.getAndSaveAsString(args, PhotoCase.FLAGGER);
 		FlagReason reason = FlagReason.getFromString(ctx.getAndSaveAsString(args, PhotoCase.REASON));
@@ -84,24 +106,23 @@ public class FlagPhotoFormHandler extends AbstractWebFormHandler {
 			return PartUtil.FLAG_PHOTO_PAGE_NAME;			
 		}
 		
-		Photo photo = PhotoManager.getPhoto(id);
+		Photo photo = photoManager.getPhoto(id);
 		photo.setStatus(photo.getStatus().asFlagged(true));
-		PhotoManager pm = PhotoManager.getInstance();
+		PhotoManager pm = photoManager;
 		pm.savePhoto(photo);
 		
 		PhotoCase photoCase = new PhotoCase(photo);
 		photoCase.setFlagger(flagger);
 		photoCase.setReason(reason);
 		photoCase.setExplanation(explanation);
-		PhotoCaseManager pcm = PhotoCaseManager.getInstance();
+		PhotoCaseManager pcm = photoCaseManager;
 		pcm.addPhotoCase(photoCase);
 		
 		EmailAddress from = EmailAddress.getFromString(flagger);
-		EmailServer emailServer = EmailServer.getInstance();
 		EmailAddress to = ctx.cfg().getModeratorEmailAddress();
 
 		String emailSubject = "Photo: " + id + " of user: " + photo.getOwnerName() + " got flagged";
-		String emailBody = "Photo: " + SysConfig.getSiteUrlAsString() + id + ".html\n\n";
+		String emailBody = "Photo: " + sysConfig.getSiteUrlAsString() + id + ".html\n\n";
 		emailBody += "Reason: " + reason + "\n\n";
 		emailBody += "Explanation: " + explanation + "\n\n";
 		
@@ -109,9 +130,9 @@ public class FlagPhotoFormHandler extends AbstractWebFormHandler {
 		
 		ctx.setEmailAddress(from);
 
-		StringBuffer sb = UserLog.createActionEntry("FlagPhoto");
-		UserLog.addUpdatedObject(sb, "Photo", photo.getId().asString());
-		UserLog.log(sb);
+		StringBuffer sb = userLog.createActionEntry("FlagPhoto");
+		userLog.addUpdatedObject(sb, "Photo", photo.getId().asString());
+		userLog.log(sb);
 		
 		ctx.setTwoLineMessage(ctx.cfg().getModeratorWasInformed(), ctx.cfg().getContinueWithShowPhoto());
 		

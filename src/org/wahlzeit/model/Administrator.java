@@ -20,7 +20,14 @@
 
 package org.wahlzeit.model;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+import javax.inject.Inject;
+
 import org.wahlzeit.services.EmailAddress;
+
+import com.google.inject.Injector;
 
 
 /**
@@ -31,18 +38,39 @@ import org.wahlzeit.services.EmailAddress;
  */
 public class Administrator extends Moderator {
 
-	/**
-	 * 
-	 */
-	public Administrator(String myName, String myPassword, String myEmailAddress, long vc) {
-		this(myName, myPassword, EmailAddress.getFromString(myEmailAddress), vc);
-	}
+	public static class Factory {
+		
+		@Inject
+		protected Injector injector;
 	
-	/**
-	 * 
-	 */
-	public Administrator(String myName, String myPassword, EmailAddress myEmailAddress, long vc) {
-		initialize(AccessRights.ADMINISTRATOR, myEmailAddress, myName, myPassword, vc);
+		/**
+		 * 
+		 */
+		public Administrator create(String myName, String myPassword, String myEmailAddress, long vc) {
+			Administrator user = injector.getInstance(Administrator.class);
+			user.initialize(AccessRights.ADMINISTRATOR, EmailAddress.getFromString(myEmailAddress), myName, myPassword, vc);
+			return user;
+		}
+		
+		/**
+		 * 
+		 */
+		public Administrator create(String myName, String myPassword, EmailAddress myEmailAddress, long vc) {
+			Administrator user = injector.getInstance(Administrator.class);
+			user.initialize(AccessRights.ADMINISTRATOR, myEmailAddress, myName, myPassword, vc);
+			return user;
+			
+		}
+	
+		
+		/**
+		 * 
+		 */
+		public Administrator create(ResultSet rset) throws SQLException {
+			Administrator user = injector.getInstance(Administrator.class);
+			user.readFrom(rset);
+			return user;
+		}
 	}
 	
 	/**

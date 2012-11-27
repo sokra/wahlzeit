@@ -20,12 +20,23 @@
 
 package org.wahlzeit.handlers;
 
-import java.util.*;
+import java.util.Map;
 
-import org.wahlzeit.model.*;
-import org.wahlzeit.services.*;
-import org.wahlzeit.utils.*;
-import org.wahlzeit.webparts.*;
+import javax.inject.Inject;
+
+import org.wahlzeit.model.AccessRights;
+import org.wahlzeit.model.Gender;
+import org.wahlzeit.model.Photo;
+import org.wahlzeit.model.User;
+import org.wahlzeit.model.UserLog;
+import org.wahlzeit.model.UserManager;
+import org.wahlzeit.model.UserSession;
+import org.wahlzeit.model.UserStatus;
+import org.wahlzeit.services.EmailAddress;
+import org.wahlzeit.services.Language;
+import org.wahlzeit.utils.HtmlUtil;
+import org.wahlzeit.utils.StringUtil;
+import org.wahlzeit.webparts.WebPart;
 
 /**
  * 
@@ -34,10 +45,16 @@ import org.wahlzeit.webparts.*;
  */
 public class AdminUserProfileFormHandler extends AbstractWebFormHandler {
 	
+	@Inject
+	protected UserLog userLog;
+	
+	@Inject
+	protected UserManager userManager;
+	
 	/**
 	 *
 	 */
-	public AdminUserProfileFormHandler() {
+	protected AdminUserProfileFormHandler() {
 		initialize(PartUtil.ADMIN_USER_PROFILE_FORM_FILE, AccessRights.ADMINISTRATOR);
 	}
 	
@@ -48,7 +65,7 @@ public class AdminUserProfileFormHandler extends AbstractWebFormHandler {
 		Map<String, Object> args = ctx.getSavedArgs();
 
 		String userId = ctx.getAndSaveAsString(args, "userId");
-		User user = UserManager.getInstance().getUserByName(userId);
+		User user = userManager.getUserByName(userId);
 	
 		Photo photo = user.getUserPhoto();
 		part.addString(Photo.THUMB, getPhotoThumb(ctx, photo));
@@ -70,10 +87,10 @@ public class AdminUserProfileFormHandler extends AbstractWebFormHandler {
 	/**
 	 * 
 	 */
-	protected String doHandlePost(UserSession ctx, Map args) {
-		UserManager um = UserManager.getInstance();
+	@Override
+	protected String doHandlePost(UserSession ctx, Map<String, ?> args) {
 		String userId = ctx.getAndSaveAsString(args, "userId");
-		User user = um.getUserByName(userId);
+		User user = userManager.getUserByName(userId);
 		
 		String status = ctx.getAndSaveAsString(args, User.STATUS);
 		String rights = ctx.getAndSaveAsString(args, User.RIGHTS);
@@ -99,13 +116,13 @@ public class AdminUserProfileFormHandler extends AbstractWebFormHandler {
 		user.setHomePage(StringUtil.asUrl(homePage));
 		user.setNotifyAboutPraise((notifyAboutPraise != null) && notifyAboutPraise.equals("on"));
 
-		um.dropUser(user);
-		user = um.getUserByName(userId);
+		userManager.dropUser(user);
+		user = userManager.getUserByName(userId);
 		ctx.setSavedArg("userId", userId);
 
-		StringBuffer sb = UserLog.createActionEntry("AdminUserProfile");
-		UserLog.addUpdatedObject(sb, "User", user.getName());
-		UserLog.log(sb);
+		StringBuffer sb = userLog.createActionEntry("AdminUserProfile");
+		userLog.addUpdatedObject(sb, "User", user.getName());
+		userLog.log(sb);
 		
 		ctx.setMessage(ctx.cfg().getProfileUpdateSucceeded());
 

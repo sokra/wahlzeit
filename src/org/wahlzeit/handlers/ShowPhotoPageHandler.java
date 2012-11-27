@@ -20,12 +20,23 @@
 
 package org.wahlzeit.handlers;
 
-import java.util.*;
+import java.util.Map;
 
-import org.wahlzeit.model.*;
-import org.wahlzeit.services.*;
-import org.wahlzeit.utils.*;
-import org.wahlzeit.webparts.*;
+import javax.inject.Inject;
+
+import org.wahlzeit.model.AccessRights;
+import org.wahlzeit.model.Client;
+import org.wahlzeit.model.Photo;
+import org.wahlzeit.model.PhotoFilter;
+import org.wahlzeit.model.PhotoManager;
+import org.wahlzeit.model.PhotoSize;
+import org.wahlzeit.model.Tags;
+import org.wahlzeit.model.UserSession;
+import org.wahlzeit.utils.HtmlUtil;
+import org.wahlzeit.utils.StringUtil;
+import org.wahlzeit.webparts.WebPart;
+import org.wahlzeit.webparts.Writable;
+import org.wahlzeit.webparts.WritableList;
 
 /**
  * 
@@ -34,30 +45,32 @@ import org.wahlzeit.webparts.*;
  */
 public class ShowPhotoPageHandler extends AbstractWebPageHandler implements WebFormHandler {
 	
+	@Inject
+	protected PhotoManager photoManager;
+	
 	/**
 	 * 
 	 */
-	public ShowPhotoPageHandler() {
+	protected ShowPhotoPageHandler() {
 		initialize(PartUtil.SHOW_PHOTO_PAGE_FILE, AccessRights.GUEST);
 	}
 	
 	/**
 	 * 
 	 */
-	protected String doHandleGet(UserSession ctx, String link, Map args) {
+	protected String doHandleGet(UserSession ctx, String link, Map<String, ?> args) {
 		Photo photo = null;
 		
 		String arg = ctx.getAsString(args, "prior");
 		if (!StringUtil.isNullOrEmptyString(arg)) {
-			ctx.setPriorPhoto(PhotoManager.getPhoto(arg));
+			ctx.setPriorPhoto(photoManager.getPhoto(arg));
 		}
 		
 		if (!link.equals(PartUtil.SHOW_PHOTO_PAGE_NAME)) {
-			photo = PhotoManager.getPhoto(link);
+			photo = photoManager.getPhoto(link);
 		}
 		
 		if (photo == null) {
-			PhotoManager photoManager = PhotoManager.getInstance();
 			PhotoFilter filter = ctx.getPhotoFilter();
 			photo = photoManager.getVisiblePhoto(filter);
 			if (photo != null) {
@@ -174,7 +187,7 @@ public class ShowPhotoPageHandler extends AbstractWebPageHandler implements WebF
 		String photoId = photo.getId().asString();
 
 		WebPart engageGuest = createWebPart(ctx, PartUtil.ENGAGE_GUEST_FORM_FILE);
-		engageGuest.addString(Photo.LINK, HtmlUtil.asHref(SysConfig.getLinkAsUrlString(photoId)));
+		engageGuest.addString(Photo.LINK, HtmlUtil.asHref(sysConfig.getLinkAsUrlString(photoId)));
 		engageGuest.addString(Photo.ID, photoId);
 
 		page.addWritable("engageGuest", engageGuest);
@@ -217,11 +230,11 @@ public class ShowPhotoPageHandler extends AbstractWebPageHandler implements WebF
 	/**
 	 * 
 	 */
-	public String handlePost(UserSession ctx, Map args) {
+	public String handlePost(UserSession ctx, Map<String, ?> args) {
 		String result = PartUtil.DEFAULT_PAGE_NAME;
 		
 		String id = ctx.getAndSaveAsString(args, Photo.ID);
-		Photo photo = PhotoManager.getPhoto(id);
+		Photo photo = photoManager.getPhoto(id);
 		if (photo != null) {
 			if (ctx.isFormType(args, "flagPhotoLink")) {
 				result = PartUtil.FLAG_PHOTO_PAGE_NAME;

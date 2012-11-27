@@ -20,10 +20,17 @@
 
 package org.wahlzeit.handlers;
 
-import java.util.*;
+import java.util.Map;
 
-import org.wahlzeit.model.*;
-import org.wahlzeit.webparts.*;
+import javax.inject.Inject;
+
+import org.wahlzeit.model.AccessRights;
+import org.wahlzeit.model.Photo;
+import org.wahlzeit.model.PhotoStatus;
+import org.wahlzeit.model.Tags;
+import org.wahlzeit.model.UserLog;
+import org.wahlzeit.model.UserSession;
+import org.wahlzeit.webparts.WebPart;
 
 /**
  * 
@@ -31,11 +38,14 @@ import org.wahlzeit.webparts.*;
  *
  */
 public class AdminUserPhotoFormHandler extends AbstractWebFormHandler {
+	
+	@Inject
+	protected UserLog userLog;
 
 	/**
 	 *
 	 */
-	public AdminUserPhotoFormHandler() {
+	protected AdminUserPhotoFormHandler() {
 		initialize(PartUtil.ADMIN_USER_PHOTO_FORM_FILE, AccessRights.ADMINISTRATOR);
 	}
 	
@@ -47,7 +57,7 @@ public class AdminUserPhotoFormHandler extends AbstractWebFormHandler {
 
 		String photoId = ctx.getAndSaveAsString(args, "photoId");
 
-		Photo photo = PhotoManager.getPhoto(photoId);
+		Photo photo = photoManager.getPhoto(photoId);
 		part.addString(Photo.THUMB, getPhotoThumb(ctx, photo));
 
 		part.addString("photoId", photoId);
@@ -59,21 +69,20 @@ public class AdminUserPhotoFormHandler extends AbstractWebFormHandler {
 	/**
 	 * 
 	 */
-	protected String doHandlePost(UserSession ctx, Map args) {
+	protected String doHandlePost(UserSession ctx, Map<String, ?> args) {
 		String id = ctx.getAndSaveAsString(args, "photoId");
-		Photo photo = PhotoManager.getPhoto(id);
+		Photo photo = photoManager.getPhoto(id);
 	
 		String tags = ctx.getAndSaveAsString(args, Photo.TAGS);
 		photo.setTags(new Tags(tags));
 		String status = ctx.getAndSaveAsString(args, Photo.STATUS);
 		photo.setStatus(PhotoStatus.getFromString(status));
 
-		PhotoManager pm = PhotoManager.getInstance();
-		pm.savePhoto(photo);
+		photoManager.savePhoto(photo);
 		
-		StringBuffer sb = UserLog.createActionEntry("AdminUserPhoto");
-		UserLog.addUpdatedObject(sb, "Photo", photo.getId().asString());
-		UserLog.log(sb);
+		StringBuffer sb = userLog.createActionEntry("AdminUserPhoto");
+		userLog.addUpdatedObject(sb, "Photo", photo.getId().asString());
+		userLog.log(sb);
 		
 		ctx.setMessage(ctx.cfg().getPhotoUpdateSucceeded());
 

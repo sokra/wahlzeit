@@ -18,48 +18,10 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-package org.wahlzeit.services;
+package org.wahlzeit.model;
 
-/**
- * A manager for Context objects (user (web) sessions, agent threads, etc.)
- * Clients can look up the context by thread.
- * 
- * @author dirkriehle
- *
- */
-public class ContextManager {
-	
-	/**
-	 * 
-	 */
-	protected static ThreadLocal<Session> contexts = new ThreadLocal<Session>();
-	
-	/**
-	 * 
-	 */
-	public static Session getThreadLocalContext() {
-		return contexts.get();
-	}
-	
-	/**
-	 * 
-	 */
-	public static void setThreadLocalContext(Session ctx) {
-		contexts.set(ctx);
-	}
-	
-	/**
-	 * 
-	 */
-	public static void dropThreadLocalContext() {
-		setThreadLocalContext(null);
-	}
+public interface Saveable {
 
-	/**
-	 * 
-	 */
-	public static DatabaseConnection getDatabaseConnection() {
-		return contexts.get().getDatabaseConnection();
-	}
+	void save();
 	
 }

@@ -20,10 +20,21 @@
 
 package org.wahlzeit.model;
 
-import java.sql.*;
-import java.util.*;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
 
-import org.wahlzeit.services.*;
+import javax.inject.Inject;
+
+import org.wahlzeit.services.ContextProvider;
+import org.wahlzeit.services.ObjectManager;
+import org.wahlzeit.services.SysLog;
+import org.wahlzeit.utils.Lifecycle;
 
 /**
  * The photo case manager provides access to and manages persistent photo cases.
@@ -31,45 +42,40 @@ import org.wahlzeit.services.*;
  * @author dirkriehle
  *
  */
-public class PhotoCaseManager extends ObjectManager {
+public class PhotoCaseManager extends ObjectManager implements Lifecycle, Saveable {
+	
+	@Inject
+	protected SysLog sysLog;
 	
 	/**
 	 * 
 	 */
 	protected Map<Integer, PhotoCase> openPhotoCases = new HashMap<Integer, PhotoCase>();
-
-	/**
-	 * 
-	 */
-	protected static final PhotoCaseManager instance = new PhotoCaseManager();
-
-	/**
-	 * 
-	 * @methodtype get
-	 */
-	public static final PhotoCaseManager getInstance() {
-		return instance;
-	}
 	
 	/**
 	 * @methodtype constructor
 	 * @methodproperty composed
 	 */
-	protected PhotoCaseManager() {
-		initialize();
+	@Inject
+	protected PhotoCaseManager(SysLog sysLog, ContextProvider contextProvider) {
+		super(sysLog, contextProvider);
 	}
 	
 	/**
 	 * @methodtype initialization
 	 * @methodproperty regular
 	 */
-	protected void initialize() {
+	@Override
+	public void startUp() {
 		Collection<PhotoCase> opc = new LinkedList<PhotoCase>();
 		loadOpenPhotoCases(opc);
 		for (PhotoCase pc : opc) {
 			openPhotoCases.put(pc.getId(), pc);
 		}
 	}
+	
+	@Override
+	public void shutDown() {}
 	
 	/**
 	 * 
@@ -89,7 +95,7 @@ public class PhotoCaseManager extends ObjectManager {
 			try {
 				result = (PhotoCase) readObject(getReadingStatement("SELECT * FROM cases WHERE id = ?"), id);
 			} catch (SQLException sex) {
-				SysLog.logThrowable(sex);
+				sysLog.logThrowable(sex);
 			}
 		}
 		
@@ -107,7 +113,7 @@ public class PhotoCaseManager extends ObjectManager {
 			updateObject(myCase, getUpdatingStatement("SELECT * FROM cases WHERE id = ?"));
 			//@FIXME Main.saveGlobals();
 		} catch (SQLException sex) {
-			SysLog.logThrowable(sex);
+			sysLog.logThrowable(sex);
 		}
 	}
 	
@@ -120,7 +126,7 @@ public class PhotoCaseManager extends ObjectManager {
 		try {
 			updateObject(myCase, getUpdatingStatement("SELECT * FROM cases WHERE id = ?"));
 		} catch (SQLException sex) {
-			SysLog.logThrowable(sex);
+			sysLog.logThrowable(sex);
 		}
 	}	
 	
@@ -132,10 +138,10 @@ public class PhotoCaseManager extends ObjectManager {
 		try {
 			readObjects(result, getReadingStatement("SELECT * FROM cases WHERE was_decided = FALSE"));
 		} catch (SQLException sex) {
-			SysLog.logThrowable(sex);
+			sysLog.logThrowable(sex);
 		}
 		
-		SysLog.logInfo("loaded all open photo cases");
+		sysLog.logInfo("loaded all open photo cases");
 	}
 	
 	/**
@@ -146,8 +152,13 @@ public class PhotoCaseManager extends ObjectManager {
 		try {
 			updateObjects(openPhotoCases.values(), getUpdatingStatement("SELECT * FROM cases WHERE id = ?"));
 		} catch (SQLException sex) {
-			SysLog.logThrowable(sex);
+			sysLog.logThrowable(sex);
 		}
+	}
+	
+	@Override
+	public void save() {
+		savePhotoCases();
 	}
 	
 	/**

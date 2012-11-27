@@ -20,12 +20,22 @@
 
 package org.wahlzeit.handlers;
 
-import java.util.*;
+import java.util.Map;
 
-import org.wahlzeit.model.*;
-import org.wahlzeit.services.*;
-import org.wahlzeit.utils.*;
-import org.wahlzeit.webparts.*;
+import javax.inject.Inject;
+
+import org.wahlzeit.model.AccessRights;
+import org.wahlzeit.model.Gender;
+import org.wahlzeit.model.LanguageConfigs;
+import org.wahlzeit.model.Photo;
+import org.wahlzeit.model.User;
+import org.wahlzeit.model.UserLog;
+import org.wahlzeit.model.UserSession;
+import org.wahlzeit.services.EmailAddress;
+import org.wahlzeit.services.Language;
+import org.wahlzeit.utils.HtmlUtil;
+import org.wahlzeit.utils.StringUtil;
+import org.wahlzeit.webparts.WebPart;
 
 /**
  * 
@@ -34,10 +44,16 @@ import org.wahlzeit.webparts.*;
  */
 public class EditUserProfileFormHandler extends AbstractWebFormHandler {
 	
+	@Inject
+	protected UserLog userLog;
+	
+	@Inject
+	protected LanguageConfigs languageConfigs;
+	
 	/**
 	 *
 	 */
-	public EditUserProfileFormHandler() {
+	protected EditUserProfileFormHandler() {
 		initialize(PartUtil.EDIT_USER_PROFILE_FORM_FILE, AccessRights.USER);
 	}
 	
@@ -66,7 +82,7 @@ public class EditUserProfileFormHandler extends AbstractWebFormHandler {
 	/**
 	 * 
 	 */
-	protected String doHandlePost(UserSession ctx, Map args) {
+	protected String doHandlePost(UserSession ctx, Map<String, ?> args) {
 		String emailAddress = ctx.getAndSaveAsString(args, User.EMAIL_ADDRESS);
 		String homePage = ctx.getAndSaveAsString(args, User.HOME_PAGE);
 		String gender = ctx.getAndSaveAsString(args, User.GENDER);
@@ -96,13 +112,13 @@ public class EditUserProfileFormHandler extends AbstractWebFormHandler {
 		
 		if (!StringUtil.isNullOrEmptyString(language)) {
 			Language langValue = Language.getFromString(language);
-			ctx.setConfiguration(LanguageConfigs.get(langValue));
+			ctx.setConfiguration(languageConfigs.get(langValue));
 			user.setLanguage(langValue);
 		}
 		
-		StringBuffer sb = UserLog.createActionEntry("EditUserProfile");
-		UserLog.addUpdatedObject(sb, "User", user.getName());
-		UserLog.log(sb);
+		StringBuffer sb = userLog.createActionEntry("EditUserProfile");
+		userLog.addUpdatedObject(sb, "User", user.getName());
+		userLog.log(sb);
 		
 		ctx.setTwoLineMessage(ctx.cfg().getProfileUpdateSucceeded(), ctx.cfg().getContinueWithShowUserHome());
 

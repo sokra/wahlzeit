@@ -20,7 +20,7 @@
 
 package org.wahlzeit.model;
 
-import org.wahlzeit.utils.*;
+import org.wahlzeit.utils.EnumValue;
 
 /**
  * An AccessRight is an enum value that represents a defined level of access.

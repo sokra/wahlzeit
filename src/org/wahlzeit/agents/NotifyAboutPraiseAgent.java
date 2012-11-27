@@ -23,8 +23,10 @@ package org.wahlzeit.agents;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.wahlzeit.model.ModelConfig;
+import javax.inject.Inject;
+
 import org.wahlzeit.model.LanguageConfigs;
+import org.wahlzeit.model.ModelConfig;
 import org.wahlzeit.model.Photo;
 import org.wahlzeit.model.UserLog;
 import org.wahlzeit.services.EmailAddress;
@@ -38,6 +40,18 @@ import org.wahlzeit.services.SysConfig;
  *
  */
 public class NotifyAboutPraiseAgent extends Agent {
+	
+	@Inject
+	protected UserLog userLog;
+	
+	@Inject
+	protected SysConfig sysConfig;
+	
+	@Inject
+	protected EmailServer emailServer;
+	
+	@Inject
+	protected LanguageConfigs languageConfigs;
 
 	/**
 	 * 
@@ -94,7 +108,7 @@ public class NotifyAboutPraiseAgent extends Agent {
 	 * 
 	 */
 	protected void notifyOwner(Photo photo, Photo[] photos) {
-		ModelConfig cfg = LanguageConfigs.get(photo.getOwnerLanguage());
+		ModelConfig cfg = languageConfigs.get(photo.getOwnerLanguage());
 		
 		EmailAddress from = cfg.getAdministratorEmailAddress();
 		EmailAddress to = photo.getOwnerEmailAddress();
@@ -106,8 +120,8 @@ public class NotifyAboutPraiseAgent extends Agent {
 			Photo current = photos[i];
 			if ((current != null) && current.hasSameOwner(photo)) {
 				String id = current.getId().asString();
-				UserLog.logInfo("notifying user: " + photo.getOwnerName() + " about photo: " + id);
-				emailBody += SysConfig.getLinkAsUrlString(id) + "\n";
+				userLog.logInfo("notifying user: " + photo.getOwnerName() + " about photo: " + id);
+				emailBody += sysConfig.getLinkAsUrlString(id) + "\n";
 				photos[i] = null;
 			}
 		}
@@ -117,7 +131,6 @@ public class NotifyAboutPraiseAgent extends Agent {
 		emailBody += cfg.getNotifyAboutPraiseEmailPostScriptum() + "\n\n----\n";
 		emailBody += cfg.getGeneralEmailFooter() + "\n\n";
 
-		EmailServer emailServer = EmailServer.getInstance();
 		emailServer.sendEmail(from, to, emailSubject, emailBody);
 	}
 

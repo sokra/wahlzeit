@@ -20,7 +20,7 @@
 
 package org.wahlzeit.services;
 
-import org.wahlzeit.utils.*;
+import org.wahlzeit.utils.EnumValue;
 
 /**
  * 

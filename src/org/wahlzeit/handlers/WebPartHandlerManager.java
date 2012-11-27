@@ -20,7 +20,8 @@
 
 package org.wahlzeit.handlers;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 
 /**
@@ -33,28 +34,16 @@ public class WebPartHandlerManager {
 	/**
 	 * 
 	 */
-	public static WebPageHandler getWebPageHandler(String name) {
-		return instance.getWebPageHandlerFor(name);
+	public WebPageHandler getWebPageHandler(String name) {
+		return getWebPageHandlerFor(name);
 	}
 	
 	/**
 	 * 
 	 */
-	public static WebFormHandler getWebFormHandler(String name) {
-		return instance.getWebFormHandlerFor(name);
+	public WebFormHandler getWebFormHandler(String name) {
+		return getWebFormHandlerFor(name);
 	}
-	
-	/**
-	 * 
-	 */
-	public static WebPartHandlerManager getInstance() {
-		return instance;
-	}
-	
-	/**
-	 * 
-	 */
-	protected static final WebPartHandlerManager instance = new WebPartHandlerManager();
 	
 	/**
 	 * 

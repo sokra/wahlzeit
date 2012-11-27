@@ -20,7 +20,9 @@
 
 package org.wahlzeit.handlers;
 
-import java.util.*;
+import java.util.Map;
+
+import javax.inject.Inject;
 
 import org.wahlzeit.model.AccessRights;
 import org.wahlzeit.model.Photo;
@@ -29,7 +31,6 @@ import org.wahlzeit.model.PhotoCaseManager;
 import org.wahlzeit.model.PhotoStatus;
 import org.wahlzeit.model.UserLog;
 import org.wahlzeit.model.UserSession;
-import org.wahlzeit.services.SysConfig;
 import org.wahlzeit.utils.HtmlUtil;
 import org.wahlzeit.utils.StringUtil;
 import org.wahlzeit.webparts.WebPart;
@@ -43,10 +44,16 @@ import org.wahlzeit.webparts.WebPart;
  */
 public class EditPhotoCaseFormHandler extends AbstractWebFormHandler {
 	
+	@Inject
+	protected UserLog userLog;
+	
+	@Inject
+	protected PhotoCaseManager photoCaseManager;
+	
 	/**
 	 *
 	 */
-	public EditPhotoCaseFormHandler() {
+	protected EditPhotoCaseFormHandler() {
 		initialize(PartUtil.EDIT_PHOTO_CASE_FORM_FILE, AccessRights.MODERATOR);
 	}
 	
@@ -70,7 +77,7 @@ public class EditPhotoCaseFormHandler extends AbstractWebFormHandler {
 		part.maskAndAddString(Photo.TAGS, tags);
 		
 		String photoId = photo.getId().asString();
-		part.addString(Photo.LINK, HtmlUtil.asHref(SysConfig.getLinkAsUrlString(photoId)));
+		part.addString(Photo.LINK, HtmlUtil.asHref(sysConfig.getLinkAsUrlString(photoId)));
 
 		part.addString(PhotoCase.FLAGGER, photoCase.getFlagger());
 		part.addString(PhotoCase.REASON, ctx.cfg().asValueString(photoCase.getReason()));
@@ -80,11 +87,10 @@ public class EditPhotoCaseFormHandler extends AbstractWebFormHandler {
 	/**
 	 * 
 	 */
-	protected String doHandlePost(UserSession ctx, Map args) {
+	protected String doHandlePost(UserSession ctx, Map<String, ?> args) {
 		String id = ctx.getAndSaveAsString(args, PhotoCase.ID);
-		PhotoCaseManager pcm = PhotoCaseManager.getInstance();
 		
-		PhotoCase photoCase = pcm.getPhotoCase(Integer.parseInt(id));
+		PhotoCase photoCase = photoCaseManager.getPhotoCase(Integer.parseInt(id));
 		Photo photo = photoCase.getPhoto();
 		PhotoStatus status = photo.getStatus();
 		if (ctx.isFormType(args, "unflag")) {
@@ -97,16 +103,16 @@ public class EditPhotoCaseFormHandler extends AbstractWebFormHandler {
 
 		photo.setStatus(status);
 
-		StringBuffer sb = UserLog.createActionEntry("EditPhotoCase");
-		UserLog.addUpdatedObject(sb, "Photo", photo.getId().asString());
-		UserLog.log(sb);
+		StringBuffer sb = userLog.createActionEntry("EditPhotoCase");
+		userLog.addUpdatedObject(sb, "Photo", photo.getId().asString());
+		userLog.log(sb);
 
 		photoCase.setDecided();
-		pcm.removePhotoCase(photoCase);
+		photoCaseManager.removePhotoCase(photoCase);
 		
-		sb = UserLog.createActionEntry("EditPhotoCase");
-		UserLog.addUpdatedObject(sb, "PhotoCase", String.valueOf(photoCase.getId()));
-		UserLog.log(sb);
+		sb = userLog.createActionEntry("EditPhotoCase");
+		userLog.addUpdatedObject(sb, "PhotoCase", String.valueOf(photoCase.getId()));
+		userLog.log(sb);
 
 		return PartUtil.SHOW_PHOTO_CASES_PAGE_NAME;
 	}

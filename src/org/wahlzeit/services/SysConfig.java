@@ -20,9 +20,14 @@
 
 package org.wahlzeit.services;
 
-import java.io.*;
+import java.io.File;
 
-import org.wahlzeit.utils.*;
+import javax.inject.Inject;
+import javax.inject.Named;
+
+import org.wahlzeit.utils.StringUtil;
+
+import com.sun.istack.internal.Nullable;
 
 /**
  * A set of utility functions to retrieve URLs and files.
@@ -57,73 +62,25 @@ public class SysConfig extends AbstractConfig {
 	/**
 	 * 
 	 */
-	protected static SysConfig instance = null;
-	
-	/**
-	 * 
-	 */
-	public static SysConfig getInstance() {
-		if (instance == null) {
-			SysLog.logInfo("setting generic SysConfig");
-			setInstance(new SysConfig("localhost", "8585"));
-		}
-		return instance;
-	}
-	
-	/**
-	 * Sets the singleton instance of SysConfig.
-	 *
-	 * @methodtype set
-	 * @methodproperty composed, class
-	 */
-	public static synchronized void setInstance(SysConfig sysConfig) {
-			assertIsUninitialized();
-			instance = sysConfig;
-	}
-	
-	/**
-	 * @methodtype assertion
-	 * @methodproperty primitive, class
-	 */
-	public static synchronized void assertIsUninitialized() {
-		if (instance != null) {
-			throw new IllegalStateException("attempt to initalize SysConfig again");
-		}
-	}
-	
-	/**
-	 * Drop singleton instance to cope with repeated startup/shutdown scenarios
-	 */
-	public static synchronized void dropInstance() {
-		instance = null;
-		SysLog.logInfo("dropped current SysConfig");
-	}
-	
-	/**
-	 * 
-	 */
 	protected ConfigDir scriptsDir = new ConfigDir("config" + File.separator + "scripts");
 	protected ConfigDir staticDir = new ConfigDir("config" + File.separator + "static");
 	protected ConfigDir templatesDir = new ConfigDir("config" + File.separator + "templates");
-	
-	/**
-	 * 
-	 */
-	public SysConfig(String host) {
-		this(host, "80");
-	}
+
 	
 	/**
 	 *
 	 */
-	public SysConfig(String host, String port) {
+	@Inject
+	public SysConfig(@Nullable @Named("host") String host, @Nullable @Named("port") String port) {
 		// Web frontend access
-		if (!StringUtil.isNullOrEmptyString(port) && !port.equals("80")) {
-			doSetValue(SysConfig.HTTP_PORT, port);
-			doSetValue(SysConfig.SITE_URL, "http://" + host + ":" + port + "/");
-		} else {
-			doSetValue(SysConfig.HTTP_PORT, "80");
-			doSetValue(SysConfig.SITE_URL, "http://" + host + "/");
+		if(host != null) {
+			if (!StringUtil.isNullOrEmptyString(port) && !port.equals("80")) {
+				doSetValue(SysConfig.HTTP_PORT, port);
+				doSetValue(SysConfig.SITE_URL, "http://" + host + ":" + port + "/");
+			} else {
+				doSetValue(SysConfig.HTTP_PORT, "80");
+				doSetValue(SysConfig.SITE_URL, "http://" + host + "/");
+			}
 		}
 
 		doSetValue(SysConfig.PHOTOS_URL_PATH, "data/photos/");
@@ -149,92 +106,92 @@ public class SysConfig extends AbstractConfig {
 	/**
 	 * 
 	 */
-	public static String getSiteUrlAsString() {
-		return getInstance().getValue(SysConfig.SITE_URL);
+	public String getSiteUrlAsString() {
+		return getValue(SysConfig.SITE_URL);
 	}
 
 	/**
 	 * 
 	 */
-	public static String getLinkAsUrlString(String link) {
+	public String getLinkAsUrlString(String link) {
 		return getSiteUrlAsString() + link + ".html";
 	}
 	
 	/**
 	 * 
 	 */
-	public static String getPhotosUrlAsString() {
-		return getInstance().getValue(SysConfig.PHOTOS_URL);
+	public String getPhotosUrlAsString() {
+		return getValue(SysConfig.PHOTOS_URL);
 	}
 
 	/**
 	 * 
 	 */
-	public static String getHttpPortAsString() {
-		return getInstance().getValue(SysConfig.HTTP_PORT);
+	public String getHttpPortAsString() {
+		return getValue(SysConfig.HTTP_PORT);
 	}
 	/**
 	 * 
 	 */
-	public static int getHttpPortAsInt() {
+	public int getHttpPortAsInt() {
 		return Integer.parseInt(getHttpPortAsString());
 	}
 
 	/**
 	 * 
 	 */
-	public static String getPhotosDirAsString() {
-		return getInstance().getValue(SysConfig.PHOTOS_DIR);
+	public String getPhotosDirAsString() {
+		return getValue(SysConfig.PHOTOS_DIR);
 	}
 
 	/**
 	 * 
 	 * @return the photos URL path
 	 */
-	public static String getPhotosUrlPathAsString() {
-		return getInstance().getValue(SysConfig.PHOTOS_URL_PATH);
+	public String getPhotosUrlPathAsString() {
+		return getValue(SysConfig.PHOTOS_URL_PATH);
 	}
 
 	/**
 	 *
 	 */
-	public static String getBackupDirAsString() {
-		return getInstance().getValue(SysConfig.BACKUP_DIR);
+	public String getBackupDirAsString() {
+		return getValue(SysConfig.BACKUP_DIR);
 	}
 
 	/**
 	 * 
 	 */
-	public static String getTempDirAsString() {
-		return getInstance().getValue(SysConfig.TEMP_DIR);
+	public String getTempDirAsString() {
+		return getValue(SysConfig.TEMP_DIR);
 	}
 
 	/**
 	 * 
 	 */
-	public static ConfigDir getStaticDir() {
-		return getInstance().staticDir;
+	public ConfigDir getStaticDir() {
+		return staticDir;
 	}
 
 	/**
 	 * 
 	 */
-	public static ConfigDir getScriptsDir() {
-		return getInstance().scriptsDir;
+	public ConfigDir getScriptsDir() {
+		return scriptsDir;
 	}
 
 	/**
 	 * 
 	 */
-	public static ConfigDir getTemplatesDir() {
-		return getInstance().templatesDir;
+	public ConfigDir getTemplatesDir() {
+		return templatesDir;
 	}
 
 	/**
 	 * 
 	 */
-	public static String getHeadingImageAsUrlString(Language l) {
-		String sfn = l.asIsoCode() + File.separator + getInstance().getValue(SysConfig.HEADING_IMAGE);
+	public String getHeadingImageAsUrlString(Language l) {
+		String sfn = l.asIsoCode() + File.separator + getValue(SysConfig.HEADING_IMAGE);
 		String ffn = getStaticDir().getFullConfigFileUrl(sfn);
 		return getSiteUrlAsString() + ffn;
 	}
@@ -242,8 +199,8 @@ public class SysConfig extends AbstractConfig {
 	/**
 	 * 
 	 */
-	public static String getLogoImageAsUrlString(Language l) {
-		String sfn = l.asIsoCode() + File.separator + getInstance().getValue(SysConfig.LOGO_IMAGE);
+	public String getLogoImageAsUrlString(Language l) {
+		String sfn = l.asIsoCode() + File.separator + getValue(SysConfig.LOGO_IMAGE);
 		String ffn = getStaticDir().getFullConfigFileUrl(sfn);
 		return getSiteUrlAsString() + ffn;
 	}
@@ -251,35 +208,35 @@ public class SysConfig extends AbstractConfig {
 	/**
 	 * 
 	 */
-	public static String getEmptyImageAsUrlString(Language l) {
-		String sfn = l.asIsoCode() + File.separator + getInstance().getValue(SysConfig.EMPTY_IMAGE);
+	public String getEmptyImageAsUrlString(Language l) {
+		String sfn = l.asIsoCode() + File.separator + getValue(SysConfig.EMPTY_IMAGE);
 		String ffn = getStaticDir().getFullConfigFileUrl(sfn);
 		return getSiteUrlAsString() + ffn;
 	}
 
-	public static String getDbDriverAsString()	{
-		return getInstance().getValue(SysConfig.DB_DRIVER);
+	public String getDbDriverAsString()	{
+		return getValue(SysConfig.DB_DRIVER);
 	}
 	
 	/**
 	 * 
 	 */
-	public static String getDbConnectionAsString() {
-		return getInstance().getValue(SysConfig.DB_CONNECTION);
+	public String getDbConnectionAsString() {
+		return getValue(SysConfig.DB_CONNECTION);
 	}
 	
 	/**
 	 * 
 	 */
-	public static String getDbUserAsString() {
-		return getInstance().getValue(SysConfig.DB_USER);
+	public String getDbUserAsString() {
+		return getValue(SysConfig.DB_USER);
 	}
 	
 	/**
 	 * 
 	 */
-	public static String getDbPasswordAsString() {
-		return getInstance().getValue(SysConfig.DB_PASSWORD);
+	public String getDbPasswordAsString() {
+		return getValue(SysConfig.DB_PASSWORD);
 	}
 
 }

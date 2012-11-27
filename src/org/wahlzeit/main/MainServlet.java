@@ -20,21 +20,25 @@
 
 package org.wahlzeit.main;
 
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 
-import javax.servlet.*;
-import javax.servlet.http.*;
+import javax.inject.Inject;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
-import org.mortbay.servlet.*;
+import org.mortbay.servlet.MultiPartRequest;
+import org.wahlzeit.handlers.PartUtil;
 import org.wahlzeit.handlers.WebFormHandler;
 import org.wahlzeit.handlers.WebPageHandler;
 import org.wahlzeit.handlers.WebPartHandlerManager;
-import org.wahlzeit.handlers.PartUtil;
 import org.wahlzeit.model.UserLog;
 import org.wahlzeit.model.UserSession;
-import org.wahlzeit.services.SysConfig;
-import org.wahlzeit.services.SysLog;
 import org.wahlzeit.webparts.WebPart;
 
 
@@ -45,6 +49,12 @@ import org.wahlzeit.webparts.WebPart;
  *
  */
 public class MainServlet extends AbstractServlet {
+	
+	@Inject
+	protected UserLog userLog;
+	
+	@Inject
+	protected WebPartHandlerManager webPartHandlerManager;
 
 	/**
 	 * 
@@ -66,13 +76,13 @@ public class MainServlet extends AbstractServlet {
 		}
 		
 		link = link.substring(linkStart, linkEnd);
-		UserLog.logValue("requested", link);
+		userLog.logValue("requested", link);
 
-		WebPageHandler handler = WebPartHandlerManager.getWebPageHandler(link);
+		WebPageHandler handler = webPartHandlerManager.getWebPageHandler(link);
 		String newLink = PartUtil.DEFAULT_PAGE_NAME;
 		if (handler != null) {
-			Map args = getRequestArgs(request);
-			SysLog.logInfo("GET arguments: " + getRequestArgsAsString(ctx, args));
+			Map<String, ?> args = getRequestArgs(request);
+			sysLog.logInfo("GET arguments: " + getRequestArgsAsString(ctx, args));
 			newLink = handler.handleGet(ctx, link, args);
 		}
 
@@ -83,7 +93,7 @@ public class MainServlet extends AbstractServlet {
 			ctx.clearSavedArgs(); // saved args go from post to next get
 			ctx.resetProcessingTime();
 		} else {
-			SysLog.logValue("redirect", newLink);
+			sysLog.logValue("redirect", newLink);
 			redirectRequest(response, newLink);
 			ctx.addProcessingTime(System.currentTimeMillis() - startTime);
 		}
@@ -104,12 +114,12 @@ public class MainServlet extends AbstractServlet {
 		} else {
 			link = PartUtil.NULL_FORM_NAME;
 		}
-		UserLog.logValue("postedto", link);
+		userLog.logValue("postedto", link);
 			
-		Map args = getRequestArgs(request);
-		SysLog.logInfo("POST arguments: " + getRequestArgsAsString(ctx, args));
+		Map<String, ?> args = getRequestArgs(request);
+		sysLog.logInfo("POST arguments: " + getRequestArgsAsString(ctx, args));
 		
-		WebFormHandler formHandler = WebPartHandlerManager.getWebFormHandler(link);
+		WebFormHandler formHandler = webPartHandlerManager.getWebFormHandler(link);
 		link = PartUtil.DEFAULT_PAGE_NAME;
 		if (formHandler != null) {
 			link = formHandler.handlePost(ctx, args);
@@ -122,20 +132,21 @@ public class MainServlet extends AbstractServlet {
 	/**
 	 * 
 	 */
-	protected Map getRequestArgs(HttpServletRequest request) throws IOException {
+	@SuppressWarnings("unchecked")
+	protected Map<String, ?> getRequestArgs(HttpServletRequest request) throws IOException {
         String contentType = request.getContentType();
         if ((contentType != null) && contentType.startsWith("multipart/form-data")) {
         	MultiPartRequest multiPartRequest = new MultiPartRequest(request);
 			return getRequestArgs(multiPartRequest);
 		} else {
-			return request.getParameterMap();
+			return (Map<String, ?>) request.getParameterMap();
 		}
 	}
 
 	/**
 	 * 
 	 */
-	protected Map getRequestArgs(MultiPartRequest request) throws IOException {
+	protected Map<String, ?> getRequestArgs(MultiPartRequest request) throws IOException {
 		Map<String, String> result = new HashMap<String, String>();
 
 		String[] keys = request.getPartNames();
@@ -144,7 +155,7 @@ public class MainServlet extends AbstractServlet {
 			String value = null;
 			if (key.equals("fileName")) {
 				InputStream in = request.getInputStream(key);
-				String tempName = SysConfig.getTempDirAsString() + Thread.currentThread().getId();
+				String tempName = sysConfig.getTempDirAsString() + Thread.currentThread().getId();
 				FileOutputStream out = new FileOutputStream(new File(tempName));
 				int uploaded = 0;
 				for (int avail = in.available(); (avail > 0) && (uploaded < 1000000); avail = in.available()) {

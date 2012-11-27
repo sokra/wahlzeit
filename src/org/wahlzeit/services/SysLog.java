@@ -20,7 +20,11 @@
 
 package org.wahlzeit.services;
 
-import java.sql.*;
+import java.sql.Statement;
+import java.text.DateFormat;
+
+import javax.inject.Inject;
+import javax.inject.Named;
 
 /**
  * Logging class for logging system-level messages.
@@ -34,14 +38,20 @@ public class SysLog extends Log {
 	/**
 	 * More stuff
 	 */
-	protected static boolean isInProductionFlag = false;
+	protected final boolean isInProductionFlag;
+	
+	@Inject
+	public SysLog(ContextProvider contextProvider, DateFormat dateFormatter, @Named("production") boolean isInProductionFlag) {
+		super(contextProvider, dateFormatter);
+		this.isInProductionFlag = isInProductionFlag;
+		initialize();
+	}
 	
 	/**
 	 * 
 	 */
-	public static void initialize(boolean myIsInProduction) {
-		isInProductionFlag = myIsInProduction;
-		if (isInProductionMode()) {
+	public void initialize() {
+		if (isInProductionFlag) {
 			logInfo("set to production mode");
 		} else {
 			logInfo("set to development mode");
@@ -51,63 +61,49 @@ public class SysLog extends Log {
 	/**
 	 * 
 	 */
-	public static boolean isInProductionMode() {
-		return isInProductionFlag;
-	}
-	
-	/**
-	 * 
-	 */
-	public static boolean isInDevelopmentMode() {
-		return !isInProductionMode();
-	}
-	
-	/**
-	 * 
-	 */
-	public static StringBuffer createSysLogEntry() {
+	public StringBuffer createSysLogEntry() {
 		return createLogEntry("sl");
 	}
 
 	/**
 	 * 
 	 */
-	public static void logInfo(String s) {
+	public void logInfo(String s) {
 		logInfo("sl", s);
 	}
 	
 	/**
 	 * 
 	 */
-	public static void logError(String s) {
+	public void logError(String s) {
 		logError("sl", s);
 	}
 	
 	/**
 	 * 
 	 */
-	public static void logValue(String type, String value) {
+	public void logValue(String type, String value) {
 		logValue("sl", type, value);
 	}
 	
 	/**
 	 * 
 	 */
-	public static void logValueWithInfo(String type, String value, String info) {
+	public void logValueWithInfo(String type, String value, String info) {
 		logValueWithInfo("sl", type, value, info);
 	}
 	
 	/**
 	 * 
 	 */
-	public static void logCreatedObject(String type, String object) {
+	public void logCreatedObject(String type, String object) {
 		logCreatedObject("sl", type, object);
 	}
 	
 	/**
 	 * 
 	 */
-	public static final void logQuery(Statement q) {
+	public final void logQuery(Statement q) {
 		StringBuffer sb = createSysLogEntry();
 		addLogType(sb, "info");
 		addQuery(sb, q);
@@ -117,7 +113,7 @@ public class SysLog extends Log {
 	/**
 	 * 
 	 */
-	public static final void logQuery(String s) {
+	public final void logQuery(String s) {
 		StringBuffer sb = createSysLogEntry();
 		addLogType(sb, "info");
 		addField(sb, "query", s);
@@ -127,7 +123,7 @@ public class SysLog extends Log {
 	/**
 	 * 
 	 */
-	public static final void logThrowable(Throwable t) {
+	public final void logThrowable(Throwable t) {
 		StringBuffer sb = createSysLogEntry();
 		addLogType(sb, "exception");
 		addThrowable(sb, t);

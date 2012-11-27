@@ -20,14 +20,25 @@
 
 package org.wahlzeit.handlers;
 
-import java.util.*;
-import java.io.*;
-import org.mortbay.util.IO;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Map;
 
-import org.wahlzeit.model.*;
-import org.wahlzeit.services.*;
-import org.wahlzeit.utils.*;
-import org.wahlzeit.webparts.*;
+import javax.inject.Inject;
+
+import org.mortbay.util.IO;
+import org.wahlzeit.model.AccessRights;
+import org.wahlzeit.model.Photo;
+import org.wahlzeit.model.PhotoManager;
+import org.wahlzeit.model.Tags;
+import org.wahlzeit.model.User;
+import org.wahlzeit.model.UserLog;
+import org.wahlzeit.model.UserSession;
+import org.wahlzeit.utils.StringUtil;
+import org.wahlzeit.webparts.WebPart;
 
 /**
  * 
@@ -36,10 +47,16 @@ import org.wahlzeit.webparts.*;
  */
 public class UploadPhotoFormHandler extends AbstractWebFormHandler {
 	
+	@Inject
+	protected UserLog userLog;
+	
+	@Inject
+	protected PhotoManager photoManager;
+	
 	/**
 	 *
 	 */
-	public UploadPhotoFormHandler() {
+	protected UploadPhotoFormHandler() {
 		initialize(PartUtil.UPLOAD_PHOTO_FORM_FILE, AccessRights.USER);
 	}
 	
@@ -56,7 +73,7 @@ public class UploadPhotoFormHandler extends AbstractWebFormHandler {
 	/**
 	 * 
 	 */
-	protected String doHandlePost(UserSession ctx, Map args) {
+	protected String doHandlePost(UserSession ctx, Map<String, ?> args) {
 		String tags = ctx.getAndSaveAsString(args, Photo.TAGS);
 
 		if (!StringUtil.isLegalTagsString(tags)) {
@@ -65,12 +82,11 @@ public class UploadPhotoFormHandler extends AbstractWebFormHandler {
 		}
 
 		try {
-			PhotoManager pm = PhotoManager.getInstance();
 			String sourceFileName = ctx.getAsString(args, "fileName");
 			File file = new File(sourceFileName);
-			Photo photo = pm.createPhoto(file);
+			Photo photo = photoManager.createPhoto(file);
 
-			String targetFileName = SysConfig.getBackupDirAsString() + photo.getId().asString();
+			String targetFileName = sysConfig.getBackupDirAsString() + photo.getId().asString();
 			createBackup(sourceFileName, targetFileName);
 		
 			User user = (User) ctx.getClient();
@@ -78,15 +94,15 @@ public class UploadPhotoFormHandler extends AbstractWebFormHandler {
 			
 			photo.setTags(new Tags(tags));
 
-			pm.savePhoto(photo);
+			photoManager.savePhoto(photo);
 
-			StringBuffer sb = UserLog.createActionEntry("UploadPhoto");
-			UserLog.addCreatedObject(sb, "Photo", photo.getId().asString());
-			UserLog.log(sb);
+			StringBuffer sb = userLog.createActionEntry("UploadPhoto");
+			userLog.addCreatedObject(sb, "Photo", photo.getId().asString());
+			userLog.log(sb);
 			
 			ctx.setTwoLineMessage(ctx.cfg().getPhotoUploadSucceeded(), ctx.cfg().getKeepGoing());
 		} catch (Exception ex) {
-			SysLog.logThrowable(ex);
+			sysLog.logThrowable(ex);
 			ctx.setMessage(ctx.cfg().getPhotoUploadFailed());
 		}
 		
@@ -104,8 +120,8 @@ public class UploadPhotoFormHandler extends AbstractWebFormHandler {
 			OutputStream outputStream = new FileOutputStream(targetFile);
 			IO.copy(inputStream, outputStream);
 		} catch (Exception ex) {
-			SysLog.logInfo("could not create backup file of photo");
-			SysLog.logThrowable(ex);			
+			sysLog.logInfo("could not create backup file of photo");
+			sysLog.logThrowable(ex);			
 		}
 	}
 }

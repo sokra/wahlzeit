@@ -20,7 +20,11 @@
 
 package org.wahlzeit.model;
 
-import java.sql.*;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+import javax.inject.Inject;
 
 
 /**
@@ -30,6 +34,9 @@ import java.sql.*;
  *
  */
 public class PhotoCase extends Case {
+	
+	@Inject
+	protected PhotoManager photoManager;
 	
 	/**
 	 * 
@@ -83,7 +90,7 @@ public class PhotoCase extends Case {
 	 */
 	public void readFrom(ResultSet rset) throws SQLException {
 		id = rset.getInt("id");
-		photo = PhotoManager.getPhoto(PhotoId.getId(rset.getInt("photo")));
+		photo = photoManager.getPhoto(PhotoId.getId(rset.getInt("photo")));
 		createdOn = rset.getLong("creation_time");
 		
 		flagger = rset.getString("flagger");

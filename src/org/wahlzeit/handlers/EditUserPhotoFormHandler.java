@@ -20,11 +20,19 @@
 
 package org.wahlzeit.handlers;
 
-import java.util.*;
+import java.util.Map;
 
-import org.wahlzeit.model.*;
-import org.wahlzeit.utils.*;
-import org.wahlzeit.webparts.*;
+import javax.inject.Inject;
+
+import org.wahlzeit.model.AccessRights;
+import org.wahlzeit.model.Photo;
+import org.wahlzeit.model.PhotoManager;
+import org.wahlzeit.model.PhotoStatus;
+import org.wahlzeit.model.Tags;
+import org.wahlzeit.model.UserLog;
+import org.wahlzeit.model.UserSession;
+import org.wahlzeit.utils.HtmlUtil;
+import org.wahlzeit.webparts.WebPart;
 
 /**
  * 
@@ -32,18 +40,24 @@ import org.wahlzeit.webparts.*;
  *
  */
 public class EditUserPhotoFormHandler extends AbstractWebFormHandler {
+	
+	@Inject
+	protected UserLog userLog;
+	
+	@Inject
+	protected PhotoManager photoManager;
 
 	/**
 	 *
 	 */
-	public EditUserPhotoFormHandler() {
+	protected EditUserPhotoFormHandler() {
 		initialize(PartUtil.EDIT_USER_PHOTO_FORM_FILE, AccessRights.USER);
 	}
 	
 	/**
 	 * 
 	 */
-	protected boolean isWellFormedGet(UserSession ctx, String link, Map args) {
+	protected boolean isWellFormedGet(UserSession ctx, String link, Map<String, ?> args) {
 		return hasSavedPhotoId(ctx);
 	}
 
@@ -55,7 +69,7 @@ public class EditUserPhotoFormHandler extends AbstractWebFormHandler {
 		part.addStringFromArgs(args, UserSession.MESSAGE);
 
 		String id = ctx.getAsString(args, Photo.ID);
-		Photo photo = PhotoManager.getPhoto(id);
+		Photo photo = photoManager.getPhoto(id);
 
 		part.addString(Photo.ID, id);
 		part.addString(Photo.THUMB, getPhotoThumb(ctx, photo));
@@ -71,19 +85,19 @@ public class EditUserPhotoFormHandler extends AbstractWebFormHandler {
 	/**
 	 * 
 	 */
-	protected boolean isWellFormedPost(UserSession ctx, Map args) {
+	protected boolean isWellFormedPost(UserSession ctx, Map<String, ?> args) {
 		String id = ctx.getAsString(args, Photo.ID);
-		Photo photo = PhotoManager.getPhoto(id);
+		Photo photo = photoManager.getPhoto(id);
 		return (photo != null) && ctx.isPhotoOwner(photo);
 	}
 	
 	/**
 	 * 
 	 */
-	protected String doHandlePost(UserSession ctx, Map args) {
+	protected String doHandlePost(UserSession ctx, Map<String, ?> args) {
 		String id = ctx.getAndSaveAsString(args, Photo.ID);
-		PhotoManager pm = PhotoManager.getInstance();
-		Photo photo = PhotoManager.getPhoto(id);
+		PhotoManager pm = photoManager;
+		Photo photo = photoManager.getPhoto(id);
 
 		String tags = ctx.getAndSaveAsString(args, Photo.TAGS);
 		photo.setTags(new Tags(tags));
@@ -95,9 +109,9 @@ public class EditUserPhotoFormHandler extends AbstractWebFormHandler {
 
 		pm.savePhoto(photo);
 		
-		StringBuffer sb = UserLog.createActionEntry("EditUserPhoto");
-		UserLog.addUpdatedObject(sb, "Photo", photo.getId().asString());
-		UserLog.log(sb);
+		StringBuffer sb = userLog.createActionEntry("EditUserPhoto");
+		userLog.addUpdatedObject(sb, "Photo", photo.getId().asString());
+		userLog.log(sb);
 		
 		ctx.setTwoLineMessage(ctx.cfg().getPhotoUpdateSucceeded(), ctx.cfg().getContinueWithShowUserHome());
 

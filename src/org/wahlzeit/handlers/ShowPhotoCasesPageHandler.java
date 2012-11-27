@@ -20,15 +20,17 @@
 
 package org.wahlzeit.handlers;
 
-import java.util.*;
+import java.util.Map;
+
+import javax.inject.Inject;
 
 import org.wahlzeit.model.AccessRights;
 import org.wahlzeit.model.PhotoCase;
 import org.wahlzeit.model.PhotoCaseManager;
 import org.wahlzeit.model.UserSession;
 import org.wahlzeit.utils.HtmlUtil;
-import org.wahlzeit.webparts.Writable;
 import org.wahlzeit.webparts.WebPart;
+import org.wahlzeit.webparts.Writable;
 import org.wahlzeit.webparts.WritableList;
 
 
@@ -40,10 +42,13 @@ import org.wahlzeit.webparts.WritableList;
  */
 public class ShowPhotoCasesPageHandler extends AbstractWebPageHandler {
 	
+	@Inject
+	protected PhotoCaseManager photoCaseManager;
+	
 	/**
 	 *
 	 */
-	public ShowPhotoCasesPageHandler() {
+	protected ShowPhotoCasesPageHandler() {
 		initialize(PartUtil.SHOW_PHOTO_CASES_PAGE_FILE, AccessRights.MODERATOR);
 	}
 
@@ -51,10 +56,10 @@ public class ShowPhotoCasesPageHandler extends AbstractWebPageHandler {
 	 * 
 	 */
 	protected void makeWebPageBody(UserSession ctx, WebPart page) {
-		Map args = ctx.getSavedArgs();
+		Map<String, ?> args = ctx.getSavedArgs();
 		page.addStringFromArgs(args, UserSession.MESSAGE);
 		
-		PhotoCaseManager pcm = PhotoCaseManager.getInstance();
+		PhotoCaseManager pcm = photoCaseManager;
 		PhotoCase[] flaggedCases = pcm.getOpenPhotoCasesByAscendingAge();
 		if (flaggedCases.length != 0) {
 			WritableList openCases = new WritableList();

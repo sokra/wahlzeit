@@ -20,8 +20,10 @@
 
 package org.wahlzeit.webparts;
 
-import java.util.*;
-import java.io.*;
+import java.io.IOException;
+import java.io.Writer;
+import java.util.Iterator;
+import java.util.LinkedList;
 
 /**
  * A WritableList is a list of Writables.

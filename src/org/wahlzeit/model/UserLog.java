@@ -20,7 +20,12 @@
 
 package org.wahlzeit.model;
 
-import org.wahlzeit.services.*;
+import java.text.DateFormat;
+
+import javax.inject.Inject;
+
+import org.wahlzeit.services.ContextProvider;
+import org.wahlzeit.services.Log;
 
 /**
  * Logging class for logging user-level messages.
@@ -31,52 +36,57 @@ import org.wahlzeit.services.*;
  */
 public class UserLog extends Log {
 
+	@Inject
+	public UserLog(ContextProvider contextProvider, DateFormat dateFormatter) {
+		super(contextProvider, dateFormatter);
+	}
+
 	/**
 	 * 
 	 */
-	public static StringBuffer createUserLogEntry() {
+	public StringBuffer createUserLogEntry() {
 		return createLogEntry("ul");
 	}
 
 	/**
 	 * 
 	 */
-	public static void logInfo(String s) {
+	public void logInfo(String s) {
 		logInfo("ul", s);
 	}
 	
 	/**
 	 * 
 	 */
-	public static void logError(String s) {
+	public void logError(String s) {
 		logError("ul", s);
 	}
 	
 	/**
 	 * 
 	 */
-	public static void logValue(String type, String value) {
+	public void logValue(String type, String value) {
 		logValue("ul", type, value);
 	}
 	
 	/**
 	 * 
 	 */
-	public static void logValueWithInfo(String type, String value, String info) {
+	public void logValueWithInfo(String type, String value, String info) {
 		logValueWithInfo("ul", type, value, info);
 	}
 	
 	/**
 	 * 
 	 */
-	public static void logPerformedAction(String action) {
+	public void logPerformedAction(String action) {
 		log(createActionEntry(action));
 	}
 	
 	/**
 	 * @methodtype factory
 	 */
-	public static StringBuffer createActionEntry(String action) {
+	public StringBuffer createActionEntry(String action) {
 		StringBuffer sb = createUserLogEntry();
 		addLogType(sb, "info");
 		addField(sb, "action", action);
@@ -86,7 +96,7 @@ public class UserLog extends Log {
 	/**
 	 * 
 	 */
-	public static void addCreatedObject(StringBuffer sb, String type, String object) {
+	public void addCreatedObject(StringBuffer sb, String type, String object) {
 		addField(sb, "created", type);
 		addField(sb, "object", object);
 	}
@@ -94,7 +104,7 @@ public class UserLog extends Log {
 	/**
 	 * 
 	 */
-	public static void addUpdatedObject(StringBuffer sb, String type, String object) {
+	public void addUpdatedObject(StringBuffer sb, String type, String object) {
 		addField(sb, "updated", type);
 		addField(sb, "object", object);
 	}
@@ -102,7 +112,7 @@ public class UserLog extends Log {
 	/**
 	 * 
 	 */
-	public static void addDeletedObject(StringBuffer sb, String type, String object) {
+	public void addDeletedObject(StringBuffer sb, String type, String object) {
 		addField(sb, "deleted", type);
 		addField(sb, "object", object);
 	}

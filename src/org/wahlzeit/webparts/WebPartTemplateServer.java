@@ -20,10 +20,16 @@
 
 package org.wahlzeit.webparts;
 
-import java.util.*;
-import java.io.*;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
-import org.wahlzeit.services.*;
+import javax.inject.Inject;
+
+import org.wahlzeit.services.SysConfig;
+import org.wahlzeit.services.SysLog;
 
 /**
  * The WebPartTmplServer creates WebPartTmpls upon request by reading them from disk.
@@ -34,49 +40,17 @@ import org.wahlzeit.services.*;
  *
  */
 public class WebPartTemplateServer {
-
-	/**
-	 * 
-	 */
-	protected static final WebPartTemplateServer instance = new WebPartTemplateServer();
-
-	/**
-	 * Convenience method...
-	 */
-	public static WebPartTemplateServer getInstance() {
-		return instance;
-	}
+	
+	@Inject
+	protected SysLog sysLog;
+	
+	@Inject
+	protected SysConfig sysConfig;
 
 	/**
 	 *
 	 */
 	protected Map<String, WebPartTemplate> templates = new HashMap<String, WebPartTemplate>();
-
-	/**
-	 * 
-	 */
-	protected ConfigDir templatesDir = null;
-	
-	/**
-	 *
-	 */
-	protected WebPartTemplateServer() {
-		// do nothing	
-	}
-	
-	/**
-	 * 
-	 */
-	public ConfigDir getTemplatesDir() {
-		return templatesDir;
-	}
-	
-	/**
-	 * 
-	 */
-	public void setTemplatesDir(ConfigDir newTemplatesDir) {
-		templatesDir = newTemplatesDir;
-	}
 
 	/**
 	 * 
@@ -90,7 +64,7 @@ public class WebPartTemplateServer {
 				loadTemplate(shortName);
 				result = templates.get(shortName);
 			} catch (IOException ioex) {
-				SysLog.logThrowable(ioex);
+				sysLog.logThrowable(ioex);
 			}
 		}
 		
@@ -102,9 +76,9 @@ public class WebPartTemplateServer {
 	 */
 	protected void loadTemplate(String shortName) throws IOException {
 		WebPartTemplate template = new WebPartTemplate(shortName);
-		String fileName = getTemplatesDir().getFullConfigFileName(shortName + ".html");
+		String fileName = sysConfig.getTemplatesDir().getFullConfigFileName(shortName + ".html");
 		File file = new File(fileName);
-		SysLog.logValueWithInfo("file name", fileName, "opened HTML template file");
+		sysLog.logValueWithInfo("file name", fileName, "opened HTML template file");
 
 		FileReader reader = null;
 		try {
@@ -114,12 +88,12 @@ public class WebPartTemplateServer {
 			char[] readBuffer = new char[50000];
 			int status = reader.read(readBuffer);
 
-			SysLog.logValueWithInfo("file size", Integer.toString(status), "read HTML template file");
+			sysLog.logValueWithInfo("file size", Integer.toString(status), "read HTML template file");
 			
 			if (status != -1) {
 				String source = new String(readBuffer, 0, status);
 				template.initialize(source);
-				SysLog.logCreatedObject("WebPartTmpl", shortName);
+				sysLog.logCreatedObject("WebPartTmpl", shortName);
 			}
 
 			templates.put(shortName, template);

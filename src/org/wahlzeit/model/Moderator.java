@@ -20,7 +20,14 @@
 
 package org.wahlzeit.model;
 
-import org.wahlzeit.services.*;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+import javax.inject.Inject;
+
+import org.wahlzeit.services.EmailAddress;
+
+import com.google.inject.Injector;
 
 /**
  * A Moderator is a system user with moderator privileges.
@@ -30,20 +37,41 @@ import org.wahlzeit.services.*;
  */
 public class Moderator extends User {
 
-	/**
-	 * 
-	 */
-	public Moderator(String myName, String myPassword, String myEmailAddress, long vc) {
-		this(myName, myPassword, EmailAddress.getFromString(myEmailAddress), vc);
-	}
+	public static class Factory {
+		
+		@Inject
+		protected Injector injector;
 	
-	/**
-	 * 
-	 */
-	public Moderator(String myName, String myPassword, EmailAddress myEmailAddress, long vc) {
-		initialize(AccessRights.MODERATOR, myEmailAddress, myName, myPassword, vc);
-	}
+		/**
+		 * 
+		 */
+		public Moderator create(String myName, String myPassword, String myEmailAddress, long vc) {
+			Moderator user = injector.getInstance(Moderator.class);
+			user.initialize(AccessRights.MODERATOR, EmailAddress.getFromString(myEmailAddress), myName, myPassword, vc);
+			return user;
+		}
+		
+		/**
+		 * 
+		 */
+		public Moderator create(String myName, String myPassword, EmailAddress myEmailAddress, long vc) {
+			Moderator user = injector.getInstance(Moderator.class);
+			user.initialize(AccessRights.MODERATOR, myEmailAddress, myName, myPassword, vc);
+			return user;
+			
+		}
 	
+		
+		/**
+		 * 
+		 */
+		public Moderator create(ResultSet rset) throws SQLException {
+			Moderator user = injector.getInstance(Moderator.class);
+			user.readFrom(rset);
+			return user;
+		}
+	}
+
 	/**
 	 * 
 	 */

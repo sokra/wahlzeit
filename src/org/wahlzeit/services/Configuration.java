@@ -20,7 +20,8 @@
 
 package org.wahlzeit.services;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 
 /**
  * An interface that manages a simple key/value store.

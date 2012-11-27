@@ -20,7 +20,9 @@
 
 package org.wahlzeit.handlers;
 
-import java.util.*;
+import java.util.Map;
+
+import javax.inject.Inject;
 
 import org.wahlzeit.model.AccessRights;
 import org.wahlzeit.model.Photo;
@@ -41,6 +43,18 @@ import org.wahlzeit.webparts.WebPart;
  */
 public class SendEmailFormHandler extends AbstractWebFormHandler {
 	
+	@Inject
+	protected UserLog userLog;
+	
+	@Inject
+	protected PhotoManager photoManager;
+	
+	@Inject
+	protected UserManager userManager;
+	
+	@Inject
+	protected EmailServer emailServer;
+	
 	/**
 	 * 
 	 */
@@ -52,21 +66,21 @@ public class SendEmailFormHandler extends AbstractWebFormHandler {
 	/**
 	 *
 	 */
-	public SendEmailFormHandler() {
+	protected SendEmailFormHandler() {
 		initialize(PartUtil.SEND_EMAIL_FORM_FILE, AccessRights.GUEST);
 	}
 	
 	/**
 	 * 
 	 */
-	public boolean isWellFormedGet(UserSession ctx, String link, Map args) {
+	public boolean isWellFormedGet(UserSession ctx, String link, Map<String, ?> args) {
 		return hasSavedPhotoId(ctx);
 	}
 
 	/**
 	 * 
 	 */
-	protected String doHandleGet(UserSession ctx, String link, Map args) {
+	protected String doHandleGet(UserSession ctx, String link, Map<String, ?> args) {
 		if(!(ctx.getClient() instanceof User)) {
 			ctx.setHeading(ctx.cfg().getInformation());
 			ctx.setMessage(ctx.cfg().getNeedToSignupFirst());
@@ -80,12 +94,12 @@ public class SendEmailFormHandler extends AbstractWebFormHandler {
 	 * 
 	 */
 	protected void doMakeWebPart(UserSession ctx, WebPart part) {
-		Map args = ctx.getSavedArgs();
+		Map<String, ?> args = ctx.getSavedArgs();
 		part.addStringFromArgs(args, UserSession.MESSAGE);
 		
 		String id = ctx.getAndSaveAsString(args, Photo.ID);
 		part.addString(Photo.ID, id);
-		Photo photo = PhotoManager.getPhoto(id);
+		Photo photo = photoManager.getPhoto(id);
 		part.addString(Photo.THUMB, getPhotoThumb(ctx, photo));
 
 		part.maskAndAddString(USER, photo.getOwnerName());
@@ -100,16 +114,16 @@ public class SendEmailFormHandler extends AbstractWebFormHandler {
 	/**
 	 * 
 	 */
-	protected boolean isWellFormedPost(UserSession ctx, Map args) {
-		return PhotoManager.getPhoto(ctx.getAsString(args, Photo.ID)) != null;
+	protected boolean isWellFormedPost(UserSession ctx, Map<String, ?> args) {
+		return photoManager.getPhoto(ctx.getAsString(args, Photo.ID)) != null;
 	}
 	
 	/**
 	 * 
 	 */
-	protected String doHandlePost(UserSession ctx, Map args) {
+	protected String doHandlePost(UserSession ctx, Map<String, ?> args) {
 		String id = ctx.getAndSaveAsString(args, Photo.ID);
-		Photo photo = PhotoManager.getPhoto(id);
+		Photo photo = photoManager.getPhoto(id);
 
 		String emailSubject = ctx.getAndSaveAsString(args, EMAIL_SUBJECT);
 		String emailBody = ctx.getAndSaveAsString(args, EMAIL_BODY);
@@ -118,16 +132,14 @@ public class SendEmailFormHandler extends AbstractWebFormHandler {
 			return PartUtil.SEND_EMAIL_PAGE_NAME;			
 		}
 
-		UserManager userManager = UserManager.getInstance();
 		User toUser = userManager.getUserByName(photo.getOwnerName());
 		User fromUser = (User) ctx.getClient();
 
-		EmailServer emailServer = EmailServer.getInstance();
 		emailSubject = ctx.cfg().getSendEmailSubjectPrefix() + emailSubject;
 		emailBody = ctx.cfg().getSendEmailBodyPrefix() + emailBody + ctx.cfg().getSendEmailBodyPostfix();
 		emailServer.sendEmail(fromUser.getEmailAddress(), toUser.getEmailAddress(), ctx.cfg().getAuditEmailAddress(), emailSubject, emailBody);
 
-		UserLog.logPerformedAction("SendEmail");
+		userLog.logPerformedAction("SendEmail");
 		
 		ctx.setMessage(ctx.cfg().getEmailWasSent() + toUser.getName() + "!");
 		

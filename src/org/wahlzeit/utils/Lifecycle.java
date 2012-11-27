@@ -18,30 +18,12 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-package org.wahlzeit.services;
+package org.wahlzeit.utils;
 
-import javax.mail.*;
+public interface Lifecycle {
 
-/**
- * The NullEmailServer only pretends to send email.
- * 
- * @author dirkriehle
- *
- */
-public class NullEmailServer extends EmailServer {
+	void startUp() throws Exception;
 	
-	/**
-	 * 
-	 */
-	protected NullEmailServer() {
-		super();
-	}
-	
-	/**
-	 * 
-	 */
-	protected void doSendEmail(Message msg) {
-		SysLog.logInfo("pretending to send email...");
-	}
+	void shutDown();
 	
 }

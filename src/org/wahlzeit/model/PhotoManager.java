@@ -20,12 +20,24 @@
 
 package org.wahlzeit.model;
 
-import java.io.*;
-import java.sql.*;
-import java.util.*;
+import java.io.File;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Set;
 
-import org.wahlzeit.main.*;
-import org.wahlzeit.services.*;
+import javax.inject.Inject;
+
+import org.wahlzeit.services.ContextProvider;
+import org.wahlzeit.services.ObjectManager;
+import org.wahlzeit.services.Persistent;
+import org.wahlzeit.services.SysLog;
 
 /**
  * A photo manager provides access to and manages photos.
@@ -33,13 +45,8 @@ import org.wahlzeit.services.*;
  * @author dirkriehle
  * 
  */
-public class PhotoManager extends ObjectManager {
+public class PhotoManager extends ObjectManager implements Saveable {
 	
-	/**
-	 * 
-	 */
-	protected static final PhotoManager instance = new PhotoManager();
-
 	/**
 	 * In-memory cache for photos
 	 */
@@ -48,48 +55,50 @@ public class PhotoManager extends ObjectManager {
 	/**
 	 * 
 	 */
-	protected PhotoTagCollector photoTagCollector = null;
+	protected final PhotoTagCollector photoTagCollector;
+	
+	protected final PhotoFactory photoFactory;
+
+	protected final PhotoUtil photoUtil;
 	
 	/**
 	 * 
 	 */
-	public static final PhotoManager getInstance() {
-		return instance;
-	}
-	
-	/**
-	 * 
-	 */
-	public static final boolean hasPhoto(String id) {
+	public final boolean hasPhoto(String id) {
 		return hasPhoto(PhotoId.getId(id));
 	}
 	
 	/**
 	 * 
 	 */
-	public static final boolean hasPhoto(PhotoId id) {
+	public final boolean hasPhoto(PhotoId id) {
 		return getPhoto(id) != null;
 	}
 	
 	/**
 	 * 
 	 */
-	public static final Photo getPhoto(String id) {
+	public final Photo getPhoto(String id) {
 		return getPhoto(PhotoId.getId(id));
 	}
 	
 	/**
 	 * 
 	 */
-	public static final Photo getPhoto(PhotoId id) {
-		return instance.getPhotoFromId(id);
+	public final Photo getPhoto(PhotoId id) {
+		return getPhotoFromId(id);
 	}
 	
 	/**
 	 * 
 	 */
-	public PhotoManager() {
-		photoTagCollector = PhotoFactory.getInstance().createPhotoTagCollector();
+	@Inject
+	public PhotoManager(SysLog sysLog, ContextProvider contextProvider, 
+			PhotoFactory photoFactory, PhotoTagCollector photoTagCollector, PhotoUtil photoUtil) {
+		super(sysLog, contextProvider);
+		this.photoTagCollector = photoTagCollector;
+		this.photoFactory = photoFactory;
+		this.photoUtil = photoUtil;
 	}
 	
 	/**
@@ -114,7 +123,7 @@ public class PhotoManager extends ObjectManager {
 			try {
 				result = (Photo) readObject(getReadingStatement("SELECT * FROM photos WHERE id = ?"), id.asInt());
 			} catch (SQLException sex) {
-				SysLog.logThrowable(sex);
+				sysLog.logThrowable(sex);
 			}
 			if (result != null) {
 				doAddPhoto(result);
@@ -136,7 +145,7 @@ public class PhotoManager extends ObjectManager {
 	 * 
 	 */
 	protected Photo createObject(ResultSet rset) throws SQLException {
-		return PhotoFactory.getInstance().createPhoto(rset);
+		return photoFactory.createPhoto(rset);
 	}
 	
 	/**
@@ -149,9 +158,8 @@ public class PhotoManager extends ObjectManager {
 
 		try {
 			createObject(photo, getReadingStatement("INSERT INTO photos(id) VALUES(?)"), id.asInt());
-			Wahlzeit.saveGlobals();
 		} catch (SQLException sex) {
-			SysLog.logThrowable(sex);
+			sysLog.logThrowable(sex);
 		}
 	}
 	
@@ -174,14 +182,14 @@ public class PhotoManager extends ObjectManager {
 				if (!doHasPhoto(photo.getId())) {
 					doAddPhoto(photo);
 				} else {
-					SysLog.logValueWithInfo("photo", photo.getId().asString(), "photo had already been loaded");
+					sysLog.logValueWithInfo("photo", photo.getId().asString(), "photo had already been loaded");
 				}
 			}
 		} catch (SQLException sex) {
-			SysLog.logThrowable(sex);
+			sysLog.logThrowable(sex);
 		}
 		
-		SysLog.logInfo("loaded all photos");
+		sysLog.logInfo("loaded all photos");
 	}
 	
 	/**
@@ -191,7 +199,7 @@ public class PhotoManager extends ObjectManager {
 		try {
 			updateObject(photo, getUpdatingStatement("SELECT * FROM photos WHERE id = ?"));
 		} catch (SQLException sex) {
-			SysLog.logThrowable(sex);
+			sysLog.logThrowable(sex);
 		}
 	}
 	
@@ -202,8 +210,13 @@ public class PhotoManager extends ObjectManager {
 		try {
 			updateObjects(photoCache.values(), getUpdatingStatement("SELECT * FROM photos WHERE id = ?"));
 		} catch (SQLException sex) {
-			SysLog.logThrowable(sex);
+			sysLog.logThrowable(sex);
 		}
+	}
+	
+	@Override
+	public void save() {
+		savePhotos();
 	}
 	
 	/**
@@ -214,7 +227,7 @@ public class PhotoManager extends ObjectManager {
 		try {
 			readObjects(result, getReadingStatement("SELECT * FROM photos WHERE owner_name = ?"), ownerName);
 		} catch (SQLException sex) {
-			SysLog.logThrowable(sex);
+			sysLog.logThrowable(sex);
 		}
 		
 		for (Iterator<Photo> i = result.iterator(); i.hasNext(); ) {
@@ -271,7 +284,7 @@ public class PhotoManager extends ObjectManager {
 				stmt.setString(i + 1, filterConditions.get(i));
 			}
 			
-			SysLog.logQuery(stmt);
+			sysLog.logQuery(stmt);
 			ResultSet rset = stmt.executeQuery();
 
 			if (noFilterConditions == 0) {
@@ -289,7 +302,7 @@ public class PhotoManager extends ObjectManager {
 				}
 			}
 		} catch (SQLException sex) {
-			SysLog.logThrowable(sex);
+			sysLog.logThrowable(sex);
 		}
 		
 		return result;
@@ -330,7 +343,7 @@ public class PhotoManager extends ObjectManager {
 			String tag = i.next();
 			stmt.setString(1, tag);
 			stmt.setInt(2, photo.getId().asInt());
-			SysLog.logQuery(stmt);
+			sysLog.logQuery(stmt);
 			stmt.executeUpdate();					
 		}
 	}
@@ -340,7 +353,7 @@ public class PhotoManager extends ObjectManager {
 	 */
 	public Photo createPhoto(File file) throws Exception {
 		PhotoId id = PhotoId.getNextId();
-		Photo result = PhotoUtil.createPhoto(file, id);
+		Photo result = photoUtil.createPhoto(file, id);
 		addPhoto(result);
 		return result;
 	}

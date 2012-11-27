@@ -20,7 +20,8 @@
 
 package org.wahlzeit.webparts;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * The WebValueManager provides (and creates on-demand) WebValues.
@@ -30,18 +31,6 @@ import java.util.*;
  *
  */
 public class WebValueManager {
-
-	/**
-	 * 
-	 */
-	protected static final WebValueManager instance = new WebValueManager();
-
-	/**
-	 * Convenience method...
-	 */
-	public static WebValueManager getInstance() {
-		return instance;
-	}
 
 	/**
 	 *
@@ -58,7 +47,7 @@ public class WebValueManager {
 	/**
 	 * 
 	 */
-	public WebValue getWebValue(Class javaClass, String value) {
+	public WebValue getWebValue(Class<?> javaClass, String value) {
 		WebValue result = null;
 		if ((javaClass != null) && (value != null)) {
 			String key = javaClass.getName() + "#" + value;
@@ -77,7 +66,7 @@ public class WebValueManager {
 	/**
 	 * 
 	 */
-	protected WebValue createWebValue(Class javaClass, String value) {
+	protected WebValue createWebValue(Class<?> javaClass, String value) {
 		String className = javaClass.getSimpleName();
 		String checkedKey = value + className + "Checked";
 		String selectedKey = value + className + "Selected";

@@ -20,11 +20,17 @@
 
 package org.wahlzeit.handlers;
 
-import java.util.*;
+import java.util.Map;
 
-import org.wahlzeit.model.*;
-import org.wahlzeit.services.*;
-import org.wahlzeit.webparts.*;
+import javax.inject.Inject;
+
+import org.wahlzeit.model.AccessRights;
+import org.wahlzeit.model.LanguageConfigs;
+import org.wahlzeit.model.PhotoSize;
+import org.wahlzeit.model.UserLog;
+import org.wahlzeit.model.UserSession;
+import org.wahlzeit.services.Language;
+import org.wahlzeit.webparts.WebPart;
 
 /**
  * 
@@ -32,6 +38,12 @@ import org.wahlzeit.webparts.*;
  *
  */
 public class SetOptionsFormHandler extends AbstractWebFormHandler {
+	
+	@Inject
+	protected UserLog userLog;
+	
+	@Inject
+	protected LanguageConfigs languageConfigs;
 	
 	/**
 	 * 
@@ -42,7 +54,7 @@ public class SetOptionsFormHandler extends AbstractWebFormHandler {
 	/**
 	 *
 	 */
-	public SetOptionsFormHandler() {
+	protected SetOptionsFormHandler() {
 		initialize(PartUtil.SET_OPTIONS_FORM_FILE, AccessRights.GUEST);
 	}
 	
@@ -50,7 +62,7 @@ public class SetOptionsFormHandler extends AbstractWebFormHandler {
 	 * 
 	 */
 	protected void doMakeWebPart(UserSession ctx, WebPart part) {
-		Map args = ctx.getSavedArgs();
+		Map<String, ?> args = ctx.getSavedArgs();
 		part.addStringFromArgs(args, UserSession.MESSAGE);
 		
 //FIXME		part.addString(WebContext.MESSAGE, ctx.getMessage());
@@ -62,19 +74,19 @@ public class SetOptionsFormHandler extends AbstractWebFormHandler {
 	/**
 	 * 
 	 */
-	protected String doHandlePost(UserSession ctx, Map args) {
+	protected String doHandlePost(UserSession ctx, Map<String, ?> args) {
 		String language = ctx.getAndSaveAsString(args, LANGUAGE);
 		Language langValue = Language.getFromString(language);
-		ctx.setConfiguration(LanguageConfigs.get(langValue));
+		ctx.setConfiguration(languageConfigs.get(langValue));
 
 		String photoSize = ctx.getAndSaveAsString(args, PHOTO_SIZE);
 		PhotoSize photoValue = PhotoSize.getFromString(photoSize);
 		ctx.setPhotoSize(photoValue);
 		
-		StringBuffer sb = UserLog.createActionEntry("SetOptions");
-		UserLog.addField(sb, "Language", language);
-		UserLog.addField(sb, "PhotoSize", photoSize);
-		UserLog.log(sb);
+		StringBuffer sb = userLog.createActionEntry("SetOptions");
+		userLog.addField(sb, "Language", language);
+		userLog.addField(sb, "PhotoSize", photoSize);
+		userLog.log(sb);
 		
 		String msg1 = ctx.cfg().getOptionsWereSet();
 		String msg2 = ctx.cfg().getNoteMaximumPhotoSize();

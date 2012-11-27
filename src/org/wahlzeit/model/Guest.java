@@ -20,7 +20,7 @@
 
 package org.wahlzeit.model;
 
-import org.wahlzeit.services.*;
+import org.wahlzeit.services.EmailAddress;
 
 /**
  * A Guest is a client that is not logged in.

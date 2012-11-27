@@ -20,11 +20,17 @@
 
 package org.wahlzeit.handlers;
 
-import java.util.*;
+import java.util.Map;
 
-import org.wahlzeit.model.*;
-import org.wahlzeit.utils.*;
-import org.wahlzeit.webparts.*;
+import javax.inject.Inject;
+
+import org.wahlzeit.model.AccessRights;
+import org.wahlzeit.model.Client;
+import org.wahlzeit.model.User;
+import org.wahlzeit.model.UserManager;
+import org.wahlzeit.model.UserSession;
+import org.wahlzeit.utils.HtmlUtil;
+import org.wahlzeit.webparts.WebPart;
 
 /**
  * 
@@ -33,24 +39,27 @@ import org.wahlzeit.webparts.*;
  */
 public class ConfirmAccountPageHandler extends AbstractWebPageHandler {
 	
+	@Inject
+	protected UserManager userManager;
+	
 	/**
 	 *
 	 */
-	public ConfirmAccountPageHandler() {
+	protected ConfirmAccountPageHandler() {
 		initialize(PartUtil.SHOW_NOTE_PAGE_FILE, AccessRights.GUEST);
 	}
 	
 	/**
 	 * 
 	 */
-	protected boolean isWellFormedGet(UserSession ctx, String link, Map args) {
+	protected boolean isWellFormedGet(UserSession ctx, String link, Map<String, ?> args) {
 		return (args != null) && (args.get("code") != null);
 	}
 	
 	/**
 	 * 
 	 */
-	protected String doHandleGet(UserSession ctx, String link, Map args) {
+	protected String doHandleGet(UserSession ctx, String link, Map<String, ?> args) {
 		Client client = ctx.getClient();
 		long confirmationCode = -1;
 		
@@ -67,7 +76,7 @@ public class ConfirmAccountPageHandler extends AbstractWebPageHandler {
 			if (user.getConfirmationCode() == confirmationCode) {
 				user.setConfirmed();
 			} else {
-				UserManager.getInstance().emailConfirmationRequest(ctx, user);
+				userManager.emailConfirmationRequest(ctx, user);
 			}
 			ctx.clearConfirmationCode();
 		}

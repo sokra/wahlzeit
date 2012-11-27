@@ -20,7 +20,9 @@
 
 package org.wahlzeit.handlers;
 
-import java.util.*;
+import java.util.Map;
+
+import javax.inject.Inject;
 
 import org.wahlzeit.model.AccessRights;
 import org.wahlzeit.model.Photo;
@@ -29,7 +31,6 @@ import org.wahlzeit.model.UserLog;
 import org.wahlzeit.model.UserSession;
 import org.wahlzeit.services.EmailAddress;
 import org.wahlzeit.services.EmailServer;
-import org.wahlzeit.services.SysConfig;
 import org.wahlzeit.utils.StringUtil;
 import org.wahlzeit.webparts.WebPart;
 
@@ -42,6 +43,15 @@ import org.wahlzeit.webparts.WebPart;
  */
 public class TellFriendFormHandler extends AbstractWebFormHandler {
 	
+	@Inject
+	protected UserLog userLog;
+	
+	@Inject
+	protected PhotoManager photoManager;
+	
+	@Inject
+	protected EmailServer emailServer;
+	
 	/**
 	 * 
 	 */
@@ -53,7 +63,7 @@ public class TellFriendFormHandler extends AbstractWebFormHandler {
 	/**
 	 *
 	 */
-	public TellFriendFormHandler() {
+	protected TellFriendFormHandler() {
 		initialize(PartUtil.TELL_FRIEND_FORM_FILE, AccessRights.GUEST);
 	}
 
@@ -61,22 +71,22 @@ public class TellFriendFormHandler extends AbstractWebFormHandler {
 	 * @methodtype command
 	 */
 	protected void doMakeWebPart(UserSession ctx, WebPart part) {
-		Map args = ctx.getSavedArgs();
+		Map<String, ?> args = ctx.getSavedArgs();
 		part.addStringFromArgs(args, UserSession.MESSAGE);
 
 		part.maskAndAddStringFromArgsWithDefault(args, EMAIL_FROM, ctx.getEmailAddressAsString());
 		part.maskAndAddStringFromArgs(args, EMAIL_TO);
 		part.maskAndAddStringFromArgsWithDefault(args, EMAIL_SUBJECT, ctx.cfg().getTellFriendEmailSubject());
 		
-		String emailText = ctx.cfg().getTellFriendEmailWebsite() + "\n\n" + SysConfig.getSiteUrlAsString() + "\n\n";
+		String emailText = ctx.cfg().getTellFriendEmailWebsite() + "\n\n" + sysConfig.getSiteUrlAsString() + "\n\n";
 
 		String id = ctx.getAsString(args, Photo.ID);
-		if (!StringUtil.isNullOrEmptyString(id) && PhotoManager.hasPhoto(id)) {
-			emailText += (ctx.cfg().getTellFriendEmailPhoto() + "\n\n" + SysConfig.getSiteUrlAsString() + id + ".html" + "\n\n");
+		if (!StringUtil.isNullOrEmptyString(id) && photoManager.hasPhoto(id)) {
+			emailText += (ctx.cfg().getTellFriendEmailPhoto() + "\n\n" + sysConfig.getSiteUrlAsString() + id + ".html" + "\n\n");
 		}
 		
 		part.addString(Photo.ID, id);
-		Photo photo = PhotoManager.getPhoto(id);
+		Photo photo = photoManager.getPhoto(id);
 		part.addString(Photo.THUMB, getPhotoThumb(ctx, photo));
 
 		part.maskAndAddStringFromArgsWithDefault(args, EMAIL_BODY, emailText);
@@ -85,7 +95,7 @@ public class TellFriendFormHandler extends AbstractWebFormHandler {
 	/**
 	 * 
 	 */
-	protected String doHandlePost(UserSession ctx, Map args) {
+	protected String doHandlePost(UserSession ctx, Map<String, ?> args) {
 		String yourEmailAddress = ctx.getAndSaveAsString(args, EMAIL_FROM);
 		String friendsEmailAddress = ctx.getAndSaveAsString(args, EMAIL_TO);
 		String emailSubject = ctx.getAndSaveAsString(args, EMAIL_SUBJECT);
@@ -111,12 +121,11 @@ public class TellFriendFormHandler extends AbstractWebFormHandler {
 		EmailAddress from = EmailAddress.getFromString(yourEmailAddress);
 		EmailAddress to = EmailAddress.getFromString(friendsEmailAddress);
 
-		EmailServer emailServer = EmailServer.getInstance();
 		emailServer.sendEmail(from, to, ctx.cfg().getAuditEmailAddress(), emailSubject, emailBody);
 
 		ctx.setEmailAddress(from);
 
-		UserLog.logPerformedAction("TellFriend");
+		userLog.logPerformedAction("TellFriend");
 
 		ctx.setTwoLineMessage(ctx.cfg().getEmailWasSent() + friendsEmailAddress + "! ", ctx.cfg().getKeepGoing());
 		

@@ -20,10 +20,22 @@
 
 package org.wahlzeit.model;
 
-import java.util.*;
-import java.sql.*;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Random;
 
-import org.wahlzeit.services.*;
+import javax.inject.Inject;
+
+import org.wahlzeit.services.ContextProvider;
+import org.wahlzeit.services.EmailAddress;
+import org.wahlzeit.services.EmailServer;
+import org.wahlzeit.services.ObjectManager;
+import org.wahlzeit.services.SysConfig;
+import org.wahlzeit.services.SysLog;
 
 
 /**
@@ -32,20 +44,31 @@ import org.wahlzeit.services.*;
  * @author dirkriehle
  *
  */
-public class UserManager extends ObjectManager {
-
-	/**
-	 *
-	 */
-	protected static UserManager instance = new UserManager();
+public class UserManager extends ObjectManager implements Saveable {
+	
+	@Inject
+	protected SysConfig sysConfig;
+	
+	@Inject
+	protected EmailServer emailServer;
+	
+	@Inject
+	protected User.Factory userFactory;
+	
+	@Inject
+	protected Moderator.Factory moderatorFactory;
+	
+	@Inject
+	protected Administrator.Factory administratorFactory;
 
 	/**
 	 * 
 	 */
-	public static UserManager getInstance() {
-		return instance;
+	@Inject
+	public UserManager(SysLog sysLog, ContextProvider contextProvider) {
+		super(sysLog, contextProvider);
 	}
-	
+
 	/**
 	 * Maps nameAsTag to user of that name (as tag)
 	 */
@@ -94,7 +117,7 @@ public class UserManager extends ObjectManager {
 			try {
 				result = (User) readObject(getReadingStatement("SELECT * FROM users WHERE name_as_tag = ?"), tag);
 			} catch (SQLException sex) {
-				SysLog.logThrowable(sex);
+				sysLog.logThrowable(sex);
 			}
 			
 			if (result != null) {
@@ -121,16 +144,13 @@ public class UserManager extends ObjectManager {
 
 		AccessRights rights = AccessRights.getFromInt(rset.getInt("rights"));
 		if (rights == AccessRights.USER) {
-			result = new User();
-			result.readFrom(rset);
+			result = userFactory.create(rset);
 		} else if (rights == AccessRights.MODERATOR) {
-			result = new Moderator();
-			result.readFrom(rset);
+			result = moderatorFactory.create(rset);
 		} else if (rights == AccessRights.ADMINISTRATOR) {
-			result = new Administrator();
-			result.readFrom(rset);
+			result = administratorFactory.create(rset);
 		} else {
-			SysLog.logInfo("received NONE rights value");
+			sysLog.logInfo("received NONE rights value");
 		}
 
 		return result;
@@ -146,7 +166,7 @@ public class UserManager extends ObjectManager {
 			int id = user.getId();
 			createObject(user, getReadingStatement("INSERT INTO users(id) VALUES(?)"), id);
 		} catch (SQLException sex) {
-			SysLog.logThrowable(sex);
+			sysLog.logThrowable(sex);
 		}
 		
 		doAddUser(user);		
@@ -168,7 +188,7 @@ public class UserManager extends ObjectManager {
 		try {
 			deleteObject(user, getReadingStatement("DELETE FROM users WHERE id = ?"));
 		} catch (SQLException sex) {
-			SysLog.logThrowable(sex);
+			sysLog.logThrowable(sex);
 		}		
 	}
 	
@@ -190,14 +210,14 @@ public class UserManager extends ObjectManager {
 				if (!doHasUserByTag(user.getNameAsTag())) {
 					doAddUser(user);
 				} else {
-					SysLog.logValueWithInfo("user", user.getName(), "user had already been loaded");
+					sysLog.logValueWithInfo("user", user.getName(), "user had already been loaded");
 				}
 			}
 		} catch (SQLException sex) {
-			SysLog.logThrowable(sex);
+			sysLog.logThrowable(sex);
 		}
 		
-		SysLog.logInfo("loaded all users");
+		sysLog.logInfo("loaded all users");
 	}
 	
 	/**
@@ -211,8 +231,6 @@ public class UserManager extends ObjectManager {
 	 * 
 	 */
 	public void emailWelcomeMessage(UserSession ctx, User user) {
-		EmailServer emailServer = EmailServer.getInstance();
-
 		EmailAddress from = ctx.cfg().getAdministratorEmailAddress();
 		EmailAddress to = user.getEmailAddress();
 
@@ -220,7 +238,7 @@ public class UserManager extends ObjectManager {
 		String emailBody = ctx.cfg().getWelcomeEmailBody() + "\n\n";
 		emailBody += ctx.cfg().getWelcomeEmailUserName() + user.getName() + "\n\n"; 
 		emailBody += ctx.cfg().getConfirmAccountEmailBody() + "\n\n";
-		emailBody += SysConfig.getSiteUrlAsString() + "confirm?code=" + user.getConfirmationCode() + "\n\n";
+		emailBody += sysConfig.getSiteUrlAsString() + "confirm?code=" + user.getConfirmationCode() + "\n\n";
 		emailBody += ctx.cfg().getGeneralEmailRegards() + "\n\n----\n";
 		emailBody += ctx.cfg().getGeneralEmailFooter() + "\n\n";
 
@@ -231,14 +249,12 @@ public class UserManager extends ObjectManager {
 	 * 
 	 */
 	public void emailConfirmationRequest(UserSession ctx, User user) {
-		EmailServer emailServer = EmailServer.getInstance();
-
 		EmailAddress from = ctx.cfg().getAdministratorEmailAddress();
 		EmailAddress to = user.getEmailAddress();
 
 		String emailSubject = ctx.cfg().getConfirmAccountEmailSubject();
 		String emailBody = ctx.cfg().getConfirmAccountEmailBody() + "\n\n";
-		emailBody += SysConfig.getSiteUrlAsString() + "confirm?code=" + user.getConfirmationCode() + "\n\n";
+		emailBody += sysConfig.getSiteUrlAsString() + "confirm?code=" + user.getConfirmationCode() + "\n\n";
 		emailBody += ctx.cfg().getGeneralEmailRegards() + "\n\n----\n";
 		emailBody += ctx.cfg().getGeneralEmailFooter() + "\n\n";
 
@@ -252,7 +268,7 @@ public class UserManager extends ObjectManager {
 		try {
 			updateObject(user, getUpdatingStatement("SELECT * FROM users WHERE id = ?"));
 		} catch (SQLException sex) {
-			SysLog.logThrowable(sex);
+			sysLog.logThrowable(sex);
 		}
 	}
 	
@@ -271,8 +287,13 @@ public class UserManager extends ObjectManager {
 		try {
 			updateObjects(users.values(), getUpdatingStatement("SELECT * FROM users WHERE id = ?"));
 		} catch (SQLException sex) {
-			SysLog.logThrowable(sex);
+			sysLog.logThrowable(sex);
 		}
+	}
+	
+	@Override
+	public void save() {
+		saveUsers();
 	}
 	
 	/**
@@ -290,7 +311,7 @@ public class UserManager extends ObjectManager {
 		try {
 			result = (User) readObject(getReadingStatement("SELECT * FROM users WHERE email_address = ?"), emailAddress.asString());
 		} catch (SQLException sex) {
-			SysLog.logThrowable(sex);
+			sysLog.logThrowable(sex);
 		}
 		
 		if (result != null) {

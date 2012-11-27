@@ -20,11 +20,14 @@
 
 package org.wahlzeit.handlers;
 
-import java.util.*;
+import java.util.Map;
 
-import org.wahlzeit.model.*;
-import org.wahlzeit.utils.*;
-import org.wahlzeit.webparts.*;
+import org.wahlzeit.model.AccessRights;
+import org.wahlzeit.model.PhotoFilter;
+import org.wahlzeit.model.Tags;
+import org.wahlzeit.model.UserSession;
+import org.wahlzeit.utils.StringUtil;
+import org.wahlzeit.webparts.WebPart;
 
 /**
  * This pages handles incoming get requests for a page.
@@ -39,21 +42,21 @@ public class FilterPhotosPageHandler extends AbstractWebPageHandler {
 	/**
 	 *
 	 */
-	public FilterPhotosPageHandler() {
+	protected FilterPhotosPageHandler() {
 		initialize(PartUtil.SHOW_NOTE_PAGE_FILE, AccessRights.GUEST);
 	}
 	
 	/**
 	 * 
 	 */
-	protected boolean isWellFormedGet(UserSession ctx, String link, Map args) {
+	protected boolean isWellFormedGet(UserSession ctx, String link, Map<String, ?> args) {
 		return args != null;
 	}
 	
 	/**
 	 * 
 	 */
-	protected String doHandleGet(UserSession ctx, String link, Map args) {
+	protected String doHandleGet(UserSession ctx, String link, Map<String, ?> args) {
 		PhotoFilter filter = ctx.getPhotoFilter();
 
 		String un = ctx.getAsString(args, PhotoFilter.USER_NAME);

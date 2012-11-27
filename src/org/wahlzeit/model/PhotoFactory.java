@@ -20,9 +20,12 @@
 
 package org.wahlzeit.model;
 
-import java.sql.*;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
-import org.wahlzeit.services.*;
+import javax.inject.Inject;
+
+import com.google.inject.Injector;
 
 /**
  * 
@@ -32,81 +35,59 @@ import org.wahlzeit.services.*;
 
 public class PhotoFactory {
 	
-	/**
-	 * Hidden singleton instance; needs to be initialized from the outside.
-	 */
-	private static PhotoFactory instance = null;
-	
-	/**
-	 * Public singleton access method.
-	 */
-	public static synchronized PhotoFactory getInstance() {
-		if (instance == null) {
-			SysLog.logInfo("setting generic PhotoFactory");
-			setInstance(new PhotoFactory());
-		}
-		
-		return instance;
-	}
-	
-	/**
-	 * Method to set the singleton instance of PhotoFactory.
-	 */
-	protected static synchronized void setInstance(PhotoFactory photoFactory) {
-		if (instance != null) {
-			throw new IllegalStateException("attempt to initalize PhotoFactory twice");
-		}
-		
-		instance = photoFactory;
-	}
-	
-	/**
-	 * Hidden singleton instance; needs to be initialized from the outside.
-	 */
-	public static void initialize() {
-		getInstance(); // drops result due to getInstance() side-effects
-	}
-	
+	private final Injector injector;
+
 	/**
 	 * 
 	 */
-	protected PhotoFactory() {
-		// do nothing
+	@Inject
+	protected PhotoFactory(Injector injector) {
+		this.injector = injector;
 	}
 
 	/**
 	 * @methodtype factory
 	 */
 	public Photo createPhoto() {
-		return new Photo();
+		Photo photo = new Photo();
+		injector.injectMembers(photo);
+		return photo;
 	}
 	
 	/**
 	 * 
 	 */
 	public Photo createPhoto(PhotoId id) {
-		return new Photo(id);
+		Photo photo = new Photo(id);
+		injector.injectMembers(photo);
+		return photo;
 	}
 	
 	/**
 	 * 
 	 */
 	public Photo createPhoto(ResultSet rs) throws SQLException {
-		return new Photo(rs);
+		Photo photo = new Photo(rs);
+		injector.injectMembers(photo);
+		return photo;
 	}
 	
 	/**
 	 * 
 	 */
 	public PhotoFilter createPhotoFilter() {
-		return new PhotoFilter();
+		PhotoFilter photoFilter = new PhotoFilter();
+		injector.injectMembers(photoFilter);
+		return photoFilter;
 	}
 	
 	/**
 	 * 
 	 */
 	public PhotoTagCollector createPhotoTagCollector() {
-		return new PhotoTagCollector();
+		PhotoTagCollector photoTagCollector = new PhotoTagCollector();
+		injector.injectMembers(photoTagCollector);
+		return photoTagCollector;
 	}
 
 }

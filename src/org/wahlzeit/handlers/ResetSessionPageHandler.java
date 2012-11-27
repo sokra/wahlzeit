@@ -20,11 +20,12 @@
 
 package org.wahlzeit.handlers;
 
-import java.util.*;
+import java.util.Map;
 
-import org.wahlzeit.model.*;
-import org.wahlzeit.utils.*;
-import org.wahlzeit.webparts.*;
+import org.wahlzeit.model.AccessRights;
+import org.wahlzeit.model.UserSession;
+import org.wahlzeit.utils.HtmlUtil;
+import org.wahlzeit.webparts.WebPart;
 
 /**
  * 
@@ -36,14 +37,14 @@ public class ResetSessionPageHandler extends AbstractWebPageHandler {
 	/**
 	 *
 	 */
-	public ResetSessionPageHandler() {
+	protected ResetSessionPageHandler() {
 		initialize(PartUtil.SHOW_NOTE_PAGE_FILE, AccessRights.GUEST);
 	}
 	
 	/**
 	 * 
 	 */
-	protected String doHandleGet(UserSession ctx, String link, Map args) {
+	protected String doHandleGet(UserSession ctx, String link, Map<String, ?> args) {
 		ctx.clear();
 		return link;
 	}

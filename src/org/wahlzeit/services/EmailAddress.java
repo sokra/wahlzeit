@@ -20,7 +20,8 @@
 
 package org.wahlzeit.services;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * An email address provides a simple email address representation.

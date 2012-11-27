@@ -20,7 +20,11 @@
 
 package org.wahlzeit.model;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Random;
 
 import org.wahlzeit.utils.StringUtil;
 
@@ -46,7 +50,7 @@ public class PhotoFilter {
 	/**
 	 * 
 	 */
-	protected List<PhotoId> displayablePhotoIds = Collections.EMPTY_LIST;
+	protected List<PhotoId> displayablePhotoIds = Collections.emptyList();
 	protected List<PhotoId> processedPhotoIds = new LinkedList<PhotoId>();
 	
 	/**
@@ -157,7 +161,7 @@ public class PhotoFilter {
 	 * 
 	 */
 	public void resetDisplayablePhotoIds() {
-		displayablePhotoIds = Collections.EMPTY_LIST;
+		displayablePhotoIds = Collections.emptyList();
 	}
 	
 	/**

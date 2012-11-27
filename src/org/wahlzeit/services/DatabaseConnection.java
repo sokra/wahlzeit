@@ -20,8 +20,14 @@
 
 package org.wahlzeit.services;
 
-import java.sql.*;
-import java.util.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.inject.Inject;
 
 /**
  * A database connection wraps an RDMBS connection object.
@@ -32,42 +38,11 @@ import java.util.*;
  */
 public class DatabaseConnection {
 	
-	/**
-	 * 
-	 */
-	protected static Set<DatabaseConnection> pool = new HashSet<DatabaseConnection>();
+	@Inject
+	protected SysConfig sysConfig;
 	
-	/**
-	 * 
-	 */
-	protected static int dbcId = 0;
-	
-	/**
-	 * 
-	 */
-	public static synchronized DatabaseConnection getInstance() throws SQLException {
-		DatabaseConnection result = null;
-		if (pool.isEmpty()) {
-			result = new DatabaseConnection("dbc" + dbcId++);
-			SysLog.logCreatedObject("DatabaseConnection", result.getName());
-		} else {
-			result = pool.iterator().next();
-			pool.remove(result);
-		}
-		
-		return result;
-	}
-	
-	/**
-	 * 
-	 */
-	public static synchronized void dropInstance(DatabaseConnection dbc) {
-		if (dbc != null) {
-			pool.add(dbc);
-		} else {
-			SysLog.logError("returned null to database to pool");
-		}
-	}
+	@Inject
+	protected SysLog sysLog;
 	
 	/**
 	 * 
@@ -88,9 +63,9 @@ public class DatabaseConnection {
 	/**
 	 * 
 	 */
-	protected DatabaseConnection(String dbcName) throws SQLException {
+	protected DatabaseConnection(String dbcName, Connection connection) throws SQLException {
 		name = dbcName;
-		rdbmsConnection = openRdbmsConnection();
+		rdbmsConnection = connection;
 	}
 	
 	/**
@@ -100,7 +75,7 @@ public class DatabaseConnection {
 		try {
 			closeConnection(rdbmsConnection);
 		} catch (Throwable t) {
-			SysLog.logThrowable(t);
+			sysLog.logThrowable(t);
 		}
 	}
 	
@@ -125,7 +100,7 @@ public class DatabaseConnection {
 		PreparedStatement result = readingStatements.get(stmt);
 		if (result == null) {
 			result = getRdbmsConnection().prepareStatement(stmt);
-	   		SysLog.logCreatedObject("PreparedStatement", result.toString());
+			sysLog.logCreatedObject("PreparedStatement", result.toString());
 	   		readingStatements.put(stmt, result);
 		}
 		
@@ -139,41 +114,18 @@ public class DatabaseConnection {
 		PreparedStatement result = updatingStatements.get(stmt);
 		if (result == null) {
 			result = getRdbmsConnection().prepareStatement(stmt, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
-	   		SysLog.logCreatedObject("UpdatingStatement", result.toString());
+			sysLog.logCreatedObject("UpdatingStatement", result.toString());
 	   		updatingStatements.put(stmt, result);
 		}
 		
 		return result;
 	}
-		
-	/**
-	 *
-	 */
-	static {
-		try {
-			Class.forName("org.postgresql.Driver");
-		} catch (ClassNotFoundException ex) {
-			SysLog.logThrowable(ex);
-		}
-	}
 	
 	/**
 	 * 
 	 */
-	public static Connection openRdbmsConnection() throws SQLException {
-		String dbConnection = SysConfig.getDbConnectionAsString();
-		String dbUser = SysConfig.getDbUserAsString();
-		String dbPassword = SysConfig.getDbPasswordAsString();
-   		Connection result = DriverManager.getConnection(dbConnection, dbUser, dbPassword);
-   		SysLog.logInfo("opening database connection: " + result.toString());
-   		return result;
-	}
-	
-	/**
-	 * 
-	 */
-	public static void closeConnection(Connection cn) throws SQLException {
-  		SysLog.logInfo("closing database connection: " + cn.toString());
+	public void closeConnection(Connection cn) throws SQLException {
+		sysLog.logInfo("closing database connection: " + cn.toString());
 		cn.close();
 	}
 

@@ -20,7 +20,9 @@
 
 package org.wahlzeit.handlers;
 
-import java.util.*;
+import java.util.Map;
+
+import javax.inject.Inject;
 
 import org.wahlzeit.model.AccessRights;
 import org.wahlzeit.model.User;
@@ -39,10 +41,19 @@ import org.wahlzeit.webparts.WebPart;
  */
 public class SignupFormHandler extends AbstractWebFormHandler {
 	
+	@Inject
+	protected UserLog userLog;
+	
+	@Inject
+	protected UserManager userManager;
+	
+	@Inject
+	protected User.Factory userFactory;
+	
 	/**
 	 *
 	 */
-	public SignupFormHandler() {
+	protected SignupFormHandler() {
 		initialize(PartUtil.SIGNUP_FORM_FILE, AccessRights.GUEST);
 	}
 	
@@ -50,7 +61,7 @@ public class SignupFormHandler extends AbstractWebFormHandler {
 	 * 
 	 */
 	protected void doMakeWebPart(UserSession ctx, WebPart part) {
-		Map args = ctx.getSavedArgs();
+		Map<String, ?> args = ctx.getSavedArgs();
 		part.addStringFromArgs(args, UserSession.MESSAGE);
 		
 //		part.addString(WebContext.MESSAGE, ctx.getMessage());
@@ -65,14 +76,12 @@ public class SignupFormHandler extends AbstractWebFormHandler {
 	/**
 	 * 
 	 */
-	protected String doHandlePost(UserSession ctx, Map args) {
+	protected String doHandlePost(UserSession ctx, Map<String, ?> args) {
 		String userName = ctx.getAndSaveAsString(args, User.NAME);
 		String password = ctx.getAndSaveAsString(args, User.PASSWORD);
 		String passwordAgain = ctx.getAndSaveAsString(args, User.PASSWORD_AGAIN);
 		String emailAddress = ctx.getAndSaveAsString(args, User.EMAIL_ADDRESS);
 		String terms = ctx.getAndSaveAsString(args, User.TERMS);
-		
-		UserManager userManager = UserManager.getInstance();
 		
 		if (StringUtil.isNullOrEmptyString(userName)) {
 			ctx.setMessage(ctx.cfg().getFieldIsMissing());
@@ -107,7 +116,7 @@ public class SignupFormHandler extends AbstractWebFormHandler {
 		}
 
 		long confirmationCode = userManager.createConfirmationCode();
-		User user = new User(userName, password, emailAddress, confirmationCode);
+		User user = userFactory.create(userName, password, emailAddress, confirmationCode);
 		userManager.addUser(user);
 		
 		userManager.emailWelcomeMessage(ctx, user);
@@ -115,9 +124,9 @@ public class SignupFormHandler extends AbstractWebFormHandler {
 		
 		userManager.saveUser(user);
 		
-		StringBuffer sb = UserLog.createActionEntry("Signup");
-		UserLog.addCreatedObject(sb, "User", userName);
-		UserLog.log(sb);
+		StringBuffer sb = userLog.createActionEntry("Signup");
+		userLog.addCreatedObject(sb, "User", userName);
+		userLog.log(sb);
 		
 		ctx.setTwoLineMessage(ctx.cfg().getConfirmationEmailWasSent(), ctx.cfg().getContinueWithShowUserHome());
 

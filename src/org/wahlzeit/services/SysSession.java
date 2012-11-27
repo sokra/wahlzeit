@@ -20,6 +20,10 @@
 
 package org.wahlzeit.services;
 
+import javax.inject.Inject;
+
+import com.google.inject.Injector;
+
 /**
  * A SysSession is a context for system threads i.e. not user sessions.
  * 
@@ -31,8 +35,18 @@ public class SysSession extends Session {
 	/**
 	 * 
 	 */
-	public SysSession(String ctxName) {
-		initialize(ctxName);	
+	protected SysSession() {}
+	
+	public static class Factory {
+		
+		@Inject
+		protected Injector injector;
+		
+		public SysSession create(String ctxName) {
+			SysSession session = injector.getInstance(SysSession.class);
+			session.initialize(ctxName);
+			return session;
+		}
 	}
 
 }

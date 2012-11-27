@@ -20,12 +20,25 @@
 
 package org.wahlzeit.model;
 
-import java.util.*;
-import java.net.*;
-import java.sql.*;
+import java.net.URL;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
-import org.wahlzeit.services.*;
-import org.wahlzeit.utils.*;
+import javax.inject.Inject;
+
+import org.wahlzeit.services.EmailAddress;
+import org.wahlzeit.services.Language;
+import org.wahlzeit.services.Persistent;
+import org.wahlzeit.services.SysConfig;
+import org.wahlzeit.utils.StringUtil;
+
+import com.google.inject.Injector;
 
 /**
  * A User is a client that is logged-in, that is, has registered with the system.
@@ -37,6 +50,12 @@ import org.wahlzeit.utils.*;
  *
  */
 public class User extends Client implements Persistent {
+	
+	@Inject
+	protected PhotoManager photoManager;
+
+	@Inject
+	protected SysConfig sysConfig;
 	
 	/**
 	 * 
@@ -104,7 +123,7 @@ public class User extends Client implements Persistent {
 	 */
 	protected Language language = Language.ENGLISH;
 	protected boolean notifyAboutPraise = true;
-	protected URL homePage = StringUtil.asUrl(SysConfig.getSiteUrlAsString());
+	protected URL homePage = null;
 	protected Gender gender = Gender.UNDEFINED;
 	protected UserStatus status = UserStatus.CREATED;
 	protected long confirmationCode = 0; // 0 means doesn't need confirmation
@@ -123,27 +142,7 @@ public class User extends Client implements Persistent {
 	/**
 	 * 
 	 */
-	public User(String myName, String myPassword, String myEmailAddress, long vc) {
-		this(myName, myPassword, EmailAddress.getFromString(myEmailAddress), vc);
-	}
-	
-	/**
-	 * 
-	 */
-	public User(String myName, String myPassword, EmailAddress myEmailAddress, long vc) {
-		initialize(AccessRights.USER, myEmailAddress, myName, myPassword, vc);
-	}
-	
-	/**
-	 * 
-	 */
-	public User(ResultSet rset) throws SQLException {
-		readFrom(rset);
-	}
-	
-	/**
-	 * 
-	 */
+	@Inject
 	protected User() {
 		// do nothing
 	}
@@ -219,8 +218,8 @@ public class User extends Client implements Persistent {
 		gender = Gender.getFromInt(rset.getInt("gender"));
 		status = UserStatus.getFromInt(rset.getInt("status"));
 		confirmationCode = rset.getLong("confirmation_code");
-		photos = PhotoManager.getInstance().findPhotosByOwner(name);
-		userPhoto = PhotoManager.getPhoto(PhotoId.getId(rset.getInt("photo")));
+		photos = photoManager.findPhotosByOwner(name);
+		userPhoto = photoManager.getPhoto(PhotoId.getId(rset.getInt("photo")));
 		creationTime = rset.getLong("creation_time");
 	}
 	
@@ -378,7 +377,7 @@ public class User extends Client implements Persistent {
 	 * 
 	 */
 	public URL getDefaultHomePage() {
-		return StringUtil.asUrl(SysConfig.getSiteUrlAsString() + "filter?userName=" + name);
+		return StringUtil.asUrl(sysConfig.getSiteUrlAsString() + "filter?userName=" + name);
 	}
 	
 	/**
@@ -521,6 +520,41 @@ public class User extends Client implements Persistent {
 				}
 			}
 		};
+	}
+
+	public static class Factory {
+		
+		@Inject
+		protected Injector injector;
+	
+		/**
+		 * 
+		 */
+		public User create(String myName, String myPassword, String myEmailAddress, long vc) {
+			User user = injector.getInstance(User.class);
+			user.initialize(AccessRights.USER, EmailAddress.getFromString(myEmailAddress), myName, myPassword, vc);
+			return user;
+		}
+		
+		/**
+		 * 
+		 */
+		public User create(String myName, String myPassword, EmailAddress myEmailAddress, long vc) {
+			User user = injector.getInstance(User.class);
+			user.initialize(AccessRights.USER, myEmailAddress, myName, myPassword, vc);
+			return user;
+			
+		}
+	
+		
+		/**
+		 * 
+		 */
+		public User create(ResultSet rset) throws SQLException {
+			User user = injector.getInstance(User.class);
+			user.readFrom(rset);
+			return user;
+		}
 	}
 	
 }

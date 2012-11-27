@@ -21,12 +21,21 @@
 package org.wahlzeit.handlers;
 
 import java.util.Map;
+import java.util.Set;
 
-import org.wahlzeit.main.*;
-import org.wahlzeit.model.*;
-import org.wahlzeit.services.*;
-import org.wahlzeit.utils.*;
-import org.wahlzeit.webparts.*;
+import javax.inject.Inject;
+
+import org.wahlzeit.main.Main;
+import org.wahlzeit.model.AccessRights;
+import org.wahlzeit.model.Photo;
+import org.wahlzeit.model.PhotoManager;
+import org.wahlzeit.model.Saveable;
+import org.wahlzeit.model.User;
+import org.wahlzeit.model.UserManager;
+import org.wahlzeit.model.UserSession;
+import org.wahlzeit.utils.StringUtil;
+import org.wahlzeit.webparts.WebPart;
+import org.wahlzeit.webparts.Writable;
 
 /**
  * 
@@ -35,10 +44,22 @@ import org.wahlzeit.webparts.*;
  */
 public class ShowAdminPageHandler extends AbstractWebPageHandler implements WebFormHandler {
 	
+	@Inject
+	protected PhotoManager photoManager;
+	
+	@Inject
+	protected UserManager userManager;
+	
+	@Inject
+	protected Set<Saveable> saveables;
+	
+	@Inject
+	protected Main main;
+	
 	/**
 	 * 
 	 */
-	public ShowAdminPageHandler() {
+	protected ShowAdminPageHandler() {
 		initialize(PartUtil.SHOW_ADMIN_PAGE_FILE, AccessRights.ADMINISTRATOR);
 	}
 
@@ -46,7 +67,7 @@ public class ShowAdminPageHandler extends AbstractWebPageHandler implements WebF
 	 * 
 	 */
 	protected void makeWebPageBody(UserSession ctx, WebPart page) {
-		Map args = ctx.getSavedArgs();
+		Map<String, ?> args = ctx.getSavedArgs();
 		page.addStringFromArgs(args, UserSession.MESSAGE);
 		
 		Object userId = ctx.getSavedArg("userId");
@@ -69,7 +90,7 @@ public class ShowAdminPageHandler extends AbstractWebPageHandler implements WebF
 		WebFormHandler handler = getFormHandler(PartUtil.NULL_FORM_NAME);
 
 		String userId = ctx.getSavedArg("userId").toString();
-		User user = UserManager.getInstance().getUserByName(userId);
+		User user = userManager.getUserByName(userId);
 		if (user != null) {
 			handler = getFormHandler(PartUtil.ADMIN_USER_PROFILE_FORM_NAME);
 		}
@@ -84,7 +105,7 @@ public class ShowAdminPageHandler extends AbstractWebPageHandler implements WebF
 		WebFormHandler handler = getFormHandler(PartUtil.NULL_FORM_NAME);
 
 		String photoId = ctx.getSavedArg("photoId").toString();
-		Photo photo = PhotoManager.getPhoto(photoId);
+		Photo photo = photoManager.getPhoto(photoId);
 		if (photo != null) {
 			handler = getFormHandler(PartUtil.ADMIN_USER_PHOTO_FORM_NAME);
 		}
@@ -95,9 +116,9 @@ public class ShowAdminPageHandler extends AbstractWebPageHandler implements WebF
 	/**
 	 * 
 	 */
-	public String handlePost(UserSession ctx, Map args) {
+	public String handlePost(UserSession ctx, Map<String, ?> args) {
 		if (!hasAccessRights(ctx, args)) {
-			SysLog.logInfo("insufficient rights for POST from: " + ctx.getEmailAddressAsString());
+			sysLog.logInfo("insufficient rights for POST from: " + ctx.getEmailAddressAsString());
 			return getIllegalAccessErrorPage(ctx);
 		}
 				
@@ -119,9 +140,9 @@ public class ShowAdminPageHandler extends AbstractWebPageHandler implements WebF
 	/**
 	 * 
 	 */
-	protected String performAdminUserProfileRequest(UserSession ctx, Map args) {
+	protected String performAdminUserProfileRequest(UserSession ctx, Map<String, ?> args) {
 		String userId = ctx.getAndSaveAsString(args, "userId");
-		User user = UserManager.getInstance().getUserByName(userId);
+		User user = userManager.getUserByName(userId);
 		if (user == null) {
 			ctx.setMessage(ctx.cfg().getUserNameIsUnknown());
 		}
@@ -132,9 +153,9 @@ public class ShowAdminPageHandler extends AbstractWebPageHandler implements WebF
 	/**
 	 * 
 	 */
-	protected String performAdminUserPhotoRequest(UserSession ctx, Map args) {
+	protected String performAdminUserPhotoRequest(UserSession ctx, Map<String, ?> args) {
 		String photoId = ctx.getAndSaveAsString(args, "photoId");
-		Photo photo = PhotoManager.getPhoto(photoId);
+		Photo photo = photoManager.getPhoto(photoId);
 		if (photo == null) {
 			ctx.setMessage(ctx.cfg().getPhotoIsUnknown());
 		}
@@ -146,12 +167,12 @@ public class ShowAdminPageHandler extends AbstractWebPageHandler implements WebF
 	 * 
 	 */
 	protected String performShutdownRequest(UserSession ctx) {
-		SysLog.logInfo("shutting down");
+		sysLog.logInfo("shutting down");
 		
 		try {
-			Wahlzeit.requestStop();
+			main.requestStop();
 		} catch (Exception ex) {
-			SysLog.logThrowable(ex);
+			sysLog.logThrowable(ex);
 		}
 		
 		ctx.setMessage("Shutting down...");
@@ -162,13 +183,10 @@ public class ShowAdminPageHandler extends AbstractWebPageHandler implements WebF
 	 * 
 	 */
 	protected String performSaveAllRequest(UserSession ctx) {
-		SysLog.logInfo("saving objects");
+		sysLog.logInfo("saving objects");
 
-		try {
-			Wahlzeit.saveAll();
-		} catch (Exception ex) {
-			SysLog.logThrowable(ex);
-		}
+		for(Saveable saveable: saveables)
+			saveable.save();
 		
 		ctx.setMessage("Saved objects...");
 		return PartUtil.SHOW_NOTE_PAGE_NAME;

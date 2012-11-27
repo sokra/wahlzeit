@@ -18,70 +18,56 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-package org.wahlzeit.main;
+package org.wahlzeit.model;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 
-import org.wahlzeit.model.*;
-import org.wahlzeit.services.*;
-import org.wahlzeit.webparts.*;
+import javax.inject.Inject;
 
-/**
- * A single-threaded Main class with database connection.
- * Can be used by tools that don't want to start a server.
- * 
- * @author dirkriehle
- *
- */
-public abstract class ModelMain extends AbstractMain {
+import org.wahlzeit.main.AbstractServlet;
+import org.wahlzeit.services.ContextProvider;
+import org.wahlzeit.services.DatabaseConnection;
+import org.wahlzeit.services.SysLog;
+import org.wahlzeit.utils.Lifecycle;
+
+public class GlobalsPersistance implements Lifecycle, Saveable {
+	
+	@Inject
+	protected SysLog sysLog;
+	
+	@Inject
+	protected ContextProvider contextProvider;
 	
 	/**
 	 * 
 	 */
-	protected void startUp() throws Exception {
-		super.startUp();
-
-		configureWebPartTemplateServer();
-
-		loadGlobals();
-	}
-	
-	/**
-	 * 
-	 */
-	protected void shutDown() throws Exception {
-		saveAll();
-		
-		super.shutDown();
-	}
-	
-	/**
-	 * 
-	 */
-	public static void loadGlobals() throws SQLException {
-		DatabaseConnection dbc = ContextManager.getDatabaseConnection();
+	protected void loadGlobals() throws SQLException {
+		DatabaseConnection dbc = contextProvider.get().getDatabaseConnection();
 		Connection conn = dbc.getRdbmsConnection();
 
 		String query = "SELECT * FROM globals";
-		SysLog.logQuery(query);
+		sysLog.logQuery(query);
 
 		Statement stmt = conn.createStatement();
 		ResultSet result = stmt.executeQuery(query);
 		if (result.next()) {
 			int lastUserId = result.getInt("last_user_id");
 			User.setLastUserId(lastUserId);
-			SysLog.logInfo("loaded global variable lastUserId: " + lastUserId);
+			sysLog.logInfo("loaded global variable lastUserId: " + lastUserId);
 			int lastPhotoId = result.getInt("last_photo_id");
 			PhotoId.setValue(lastPhotoId);
-			SysLog.logInfo("loaded global variable lastPhotoId: " + lastPhotoId);
+			sysLog.logInfo("loaded global variable lastPhotoId: " + lastPhotoId);
 			int lastCaseId = result.getInt("last_case_id");
 			Case.setLastCaseId(lastCaseId);
-			SysLog.logInfo("loaded global variable lastCaseId: " + lastCaseId);
+			sysLog.logInfo("loaded global variable lastCaseId: " + lastCaseId);
 			int lastSessionId = result.getInt("last_session_id");
 			AbstractServlet.setLastSessionId(lastSessionId);		
-			SysLog.logInfo("loaded global variable lastSessionId: " + lastSessionId);
+			sysLog.logInfo("loaded global variable lastSessionId: " + lastSessionId);
 		} else {
-			SysLog.logError("Could not load globals!");
+			sysLog.logError("Could not load globals!");
 		}
 		
 		stmt.close();
@@ -90,53 +76,55 @@ public abstract class ModelMain extends AbstractMain {
 	/**
 	 *
 	 */
-	public static synchronized void saveGlobals() throws SQLException {
-		DatabaseConnection dbc = ContextManager.getDatabaseConnection();
+	protected synchronized void saveGlobals() throws SQLException {
+		DatabaseConnection dbc = contextProvider.get().getDatabaseConnection();
 		Connection conn = dbc.getRdbmsConnection();
 
 		String query = "SELECT * FROM globals";
-		SysLog.logQuery(query);
+		sysLog.logQuery(query);
 
 		Statement stmt = conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
 		ResultSet rset = stmt.executeQuery(query);
 		if (rset.next()) {
 			int lastUserId = User.getLastUserId();
 			rset.updateInt("last_user_id", lastUserId);
-			SysLog.logInfo("saved global variable lastUserId: " + lastUserId);
+			sysLog.logInfo("saved global variable lastUserId: " + lastUserId);
 			int lastPhotoId = PhotoId.getValue();
 			rset.updateInt("last_photo_id", lastPhotoId);
-			SysLog.logInfo("saved global variable lastPhotoId: " + lastPhotoId);
+			sysLog.logInfo("saved global variable lastPhotoId: " + lastPhotoId);
 			int lastCaseId = Case.getLastCaseId();
 			rset.updateInt("last_case_id", lastCaseId);
-			SysLog.logInfo("saved global variable lastCaseId: " + lastCaseId);
+			sysLog.logInfo("saved global variable lastCaseId: " + lastCaseId);
 			int lastSessionId = AbstractServlet.getLastSessionId();
 			rset.updateInt("last_session_id", lastSessionId);
-			SysLog.logInfo("saved global variable lastSessionId: " + lastSessionId);
+			sysLog.logInfo("saved global variable lastSessionId: " + lastSessionId);
 			rset.updateRow();
 		} else {
-			SysLog.logError("Could not save globals!");
+			sysLog.logError("Could not save globals!");
 		}
 		
 		stmt.close();
+	}
+
+	@Override
+	public void startUp() throws Exception {
+		loadGlobals();
+	}
+
+	@Override
+	public void shutDown() {
 	}
 	
 	/**
 	 * 
 	 */
-	public static void saveAll() throws SQLException {
-		PhotoCaseManager.getInstance().savePhotoCases();
-		PhotoManager.getInstance().savePhotos();			
-		UserManager.getInstance().saveUsers();
-
-		saveGlobals();
-	}
-
-	/**
-	 * 
-	 */
-	public static void configureWebPartTemplateServer() {
-		ConfigDir templatesDir = SysConfig.getTemplatesDir();
-		WebPartTemplateServer.getInstance().setTemplatesDir(templatesDir);
+	@Override
+	public void save() {
+		try {
+			saveGlobals();
+		} catch(SQLException t) {
+			sysLog.logThrowable(t);
+		}
 	}
 	
 }

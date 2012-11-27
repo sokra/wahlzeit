@@ -20,8 +20,13 @@
 
 package org.wahlzeit.services;
 
-import java.sql.*;
-import java.util.*;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Collection;
+import java.util.Iterator;
+
+import javax.inject.Inject;
 
 /**
  * An ObjectManager creates/reads/updates/deletes Persistent (objects) from a (relational) Database.
@@ -33,11 +38,20 @@ import java.util.*;
  */
 public abstract class ObjectManager {
 	
+	protected final SysLog sysLog;
+	protected final ContextProvider contextProvider;
+	
+	@Inject
+	public ObjectManager(SysLog sysLog, ContextProvider contextProvider) {
+		this.sysLog = sysLog;
+		this.contextProvider = contextProvider;
+	}
+	
 	/**
 	 * 
 	 */
 	public DatabaseConnection getDatabaseConnection() throws SQLException {
-		return ContextManager.getDatabaseConnection();
+		return contextProvider.get().getDatabaseConnection();
 	}
 	    
 	/**
@@ -62,7 +76,7 @@ public abstract class ObjectManager {
 	protected Persistent readObject(PreparedStatement stmt, int value) throws SQLException {
 		Persistent result = null;
 		stmt.setInt(1, value);
-		SysLog.logQuery(stmt);
+		sysLog.logQuery(stmt);
 		ResultSet rset = stmt.executeQuery();
 		if (rset.next()) {
 			result = createObject(rset);
@@ -77,7 +91,7 @@ public abstract class ObjectManager {
 	protected Persistent readObject(PreparedStatement stmt, String value) throws SQLException {
 		Persistent result = null;
 		stmt.setString(1, value);
-		SysLog.logQuery(stmt);
+		sysLog.logQuery(stmt);
 		ResultSet rset = stmt.executeQuery();
 		if (rset.next()) {
 			result = createObject(rset);
@@ -89,11 +103,12 @@ public abstract class ObjectManager {
 	/**
 	 * 
 	 */
-	protected void readObjects(Collection result, PreparedStatement stmt) throws SQLException {
-		SysLog.logQuery(stmt);
+	protected <T extends Persistent> void readObjects(Collection<T> result, PreparedStatement stmt) throws SQLException {
+		sysLog.logQuery(stmt);
 		ResultSet rset = stmt.executeQuery();
 		while (rset.next()) {
-			Persistent obj = createObject(rset);
+			@SuppressWarnings("unchecked")
+			T obj = (T) createObject(rset);
 			result.add(obj);
 		}
 	}
@@ -101,12 +116,13 @@ public abstract class ObjectManager {
 	/**
 	 * 
 	 */
-	protected void readObjects(Collection result, PreparedStatement stmt, String value) throws SQLException {
+	protected <T extends Persistent> void readObjects(Collection<T> result, PreparedStatement stmt, String value) throws SQLException {
 		stmt.setString(1, value);
-		SysLog.logQuery(stmt);
+		sysLog.logQuery(stmt);
 		ResultSet rset = stmt.executeQuery();
 		while (rset.next()) {
-			Persistent obj = createObject(rset);
+			@SuppressWarnings("unchecked")
+			T obj = (T) createObject(rset);
 			result.add(obj);
 		}
 	}
@@ -121,7 +137,7 @@ public abstract class ObjectManager {
 	 */
 	protected void createObject(Persistent obj, PreparedStatement stmt, int value) throws SQLException {
 		stmt.setInt(1, value);
-		SysLog.logQuery(stmt);
+		sysLog.logQuery(stmt);
 		stmt.executeUpdate();
 	}
 	
@@ -130,7 +146,7 @@ public abstract class ObjectManager {
 	 */
 	protected void createObject(Persistent obj, PreparedStatement stmt, String value) throws SQLException {
 		stmt.setString(1, value);
-		SysLog.logQuery(stmt);
+		sysLog.logQuery(stmt);
 		stmt.executeUpdate();
 	}
 	
@@ -140,7 +156,7 @@ public abstract class ObjectManager {
 	protected void updateObject(Persistent obj, PreparedStatement stmt) throws SQLException {
 		if (obj.isDirty()) {
 			obj.writeId(stmt, 1);
-			SysLog.logQuery(stmt);
+			sysLog.logQuery(stmt);
 			ResultSet rset = stmt.executeQuery();
 			if (rset.next()) {
 				obj.writeOn(rset);
@@ -148,7 +164,7 @@ public abstract class ObjectManager {
 				updateDependents(obj);
 				obj.resetWriteCount();
 			} else {
-				SysLog.logError("trying to update non-existent object: " + obj.getIdAsString() + "(" + obj.toString() + ")");
+				sysLog.logError("trying to update non-existent object: " + obj.getIdAsString() + "(" + obj.toString() + ")");
 			}
 		}
 	}
@@ -156,8 +172,8 @@ public abstract class ObjectManager {
 	/**
 	 * 
 	 */
-	protected void updateObjects(Collection coll, PreparedStatement stmt) throws SQLException {
-		for (Iterator i = coll.iterator(); i.hasNext(); ) {
+	protected <T extends Persistent> void updateObjects(Collection<T> coll, PreparedStatement stmt) throws SQLException {
+		for (Iterator<T> i = coll.iterator(); i.hasNext(); ) {
 			Persistent obj = (Persistent) i.next();
 			updateObject(obj, stmt);
 		}
@@ -175,7 +191,7 @@ public abstract class ObjectManager {
 	 */
 	protected void deleteObject(Persistent obj, PreparedStatement stmt) throws SQLException {
 		obj.writeId(stmt, 1);
-		SysLog.logQuery(stmt);
+		sysLog.logQuery(stmt);
 		stmt.executeUpdate();
 	}
 

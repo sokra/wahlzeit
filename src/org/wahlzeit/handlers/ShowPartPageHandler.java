@@ -22,10 +22,14 @@ package org.wahlzeit.handlers;
 
 import java.util.Map;
 
+import javax.inject.Inject;
+
 import org.wahlzeit.model.AccessRights;
 import org.wahlzeit.model.UserSession;
-import org.wahlzeit.webparts.Writable;
 import org.wahlzeit.webparts.WebPart;
+import org.wahlzeit.webparts.Writable;
+
+import com.google.inject.Injector;
 
 
 
@@ -44,8 +48,7 @@ public class ShowPartPageHandler extends AbstractWebPageHandler {
 	/**
 	 * 
 	 */
-	public ShowPartPageHandler(AccessRights myRights, WebPartHandler myPartHandler) {
-		initialize(myRights, myPartHandler);
+	protected ShowPartPageHandler() {
 	}
 
 	/**
@@ -59,7 +62,7 @@ public class ShowPartPageHandler extends AbstractWebPageHandler {
 	/**
 	 * 
 	 */
-	protected String doHandleGet(UserSession ctx, String link, Map args) {
+	protected String doHandleGet(UserSession ctx, String link, Map<String, ?> args) {
 		return partHandler.handleGet(ctx, link, null);
 	}
 
@@ -69,6 +72,22 @@ public class ShowPartPageHandler extends AbstractWebPageHandler {
 	public void makeWebPageBody(UserSession ctx, WebPart page) {
 		Writable part = partHandler.makeWebPart(ctx);
 		page.addWritable("part", part);
+	}
+	
+	
+	/**
+	 * 
+	 */
+	public static class Factory {
+		
+		@Inject
+		protected Injector injector;
+		
+		public ShowPartPageHandler create(AccessRights myRights, WebPartHandler myPartHandler) {
+			ShowPartPageHandler handler = injector.getInstance(ShowPartPageHandler.class);
+			handler.initialize(myRights, myPartHandler);
+			return handler;
+		}
 	}
 	
 }

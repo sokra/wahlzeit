@@ -64,7 +64,7 @@ public class HandlerTestSetup extends TestSetup {
 	protected UserSession createUserSession() {
 		UserSession result = null;
 		
-		ModelMain.configureWebPartTemplateServer();
+		AbstractModelMain.configureWebPartTemplateServer();
 		
 		Wahlzeit.configurePartHandlers();
 		Wahlzeit.configureLanguageModels();

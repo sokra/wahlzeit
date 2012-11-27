@@ -20,7 +20,9 @@
 
 package org.wahlzeit.handlers;
 
-import java.util.*;
+import java.util.Map;
+
+import javax.inject.Inject;
 
 import org.wahlzeit.model.AccessRights;
 import org.wahlzeit.model.User;
@@ -38,10 +40,13 @@ import org.wahlzeit.webparts.WebPart;
  */
 public class ChangePasswordFormHandler extends AbstractWebFormHandler {
 	
+	@Inject
+	protected UserLog userLog;
+	
 	/**
 	 *
 	 */
-	public ChangePasswordFormHandler() {
+	protected ChangePasswordFormHandler() {
 		initialize(PartUtil.CHANGE_PASSWORD_FORM_FILE, AccessRights.USER);
 	}
 	
@@ -60,7 +65,7 @@ public class ChangePasswordFormHandler extends AbstractWebFormHandler {
 	/**
 	 * 
 	 */
-	protected String doHandlePost(UserSession ctx, Map args) {
+	protected String doHandlePost(UserSession ctx, Map<String, ?> args) {
 		String password = ctx.getAndSaveAsString(args, User.PASSWORD);
 		String passwordAgain = ctx.getAndSaveAsString(args, User.PASSWORD_AGAIN);
 		
@@ -78,7 +83,7 @@ public class ChangePasswordFormHandler extends AbstractWebFormHandler {
 		User user = (User) ctx.getClient();
 		user.setPassword(password);
 		
-		UserLog.logPerformedAction("ChangePassword");
+		userLog.logPerformedAction("ChangePassword");
 		
 		ctx.setTwoLineMessage(ctx.cfg().getPasswordChangeSucceeded(), ctx.cfg().getContinueWithShowUserHome());
 

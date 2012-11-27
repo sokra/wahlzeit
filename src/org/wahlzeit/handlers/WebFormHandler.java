@@ -20,7 +20,7 @@
 
 package org.wahlzeit.handlers;
 
-import java.util.*;
+import java.util.Map;
 
 import org.wahlzeit.model.UserSession;
 
@@ -30,6 +30,6 @@ public interface WebFormHandler extends WebPartHandler {
 	/**
 	 * @return suggest name of page to render
 	 */
-	public String handlePost(UserSession ctx, Map args);
+	public String handlePost(UserSession ctx, Map<String, ?> args);
 	
 }

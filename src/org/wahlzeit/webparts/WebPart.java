@@ -20,10 +20,15 @@
 
 package org.wahlzeit.webparts;
 
-import java.util.*;
-import java.io.*;
+import java.io.IOException;
+import java.io.Writer;
+import java.util.HashMap;
+import java.util.Map;
 
-import org.wahlzeit.utils.*;
+import javax.inject.Inject;
+
+import org.wahlzeit.utils.EnumValue;
+import org.wahlzeit.utils.HtmlUtil;
 
 /**
  * A WebPart is a Writable formatted as HTML, working off a template.
@@ -34,6 +39,9 @@ import org.wahlzeit.utils.*;
  *
  */
 public class WebPart implements Writable {
+	
+	@Inject
+	protected WebValueManager webValueManager;
 
 	/**
 	 * 
@@ -77,7 +85,7 @@ public class WebPart implements Writable {
 	/**
 	 * 
 	 */
-	public void addStringFromArgs(Map args, String key) {
+	public void addStringFromArgs(Map<String, ?> args, String key) {
 		Object value = args.get(key);
 		if (value != null) {
 			addString(key, value.toString());
@@ -87,7 +95,7 @@ public class WebPart implements Writable {
 	/**
 	 * 
 	 */
-	public void maskAndAddStringFromArgs(Map args, String key) {
+	public void maskAndAddStringFromArgs(Map<String, ?> args, String key) {
 		Object value = args.get(key);
 		if (value != null) {
 			addString(key, HtmlUtil.maskForWeb(value.toString()));
@@ -97,7 +105,7 @@ public class WebPart implements Writable {
 	/**
 	 * 
 	 */
-	public void addStringFromArgsWithDefault(Map args, String key, String defval) {
+	public void addStringFromArgsWithDefault(Map<String, ?> args, String key, String defval) {
 		Object value = args.get(key);
 		if (value != null) {
 			addString(key, value.toString());
@@ -109,7 +117,7 @@ public class WebPart implements Writable {
 	/**
 	 * 
 	 */
-	public void maskAndAddStringFromArgsWithDefault(Map args, String key, String defval) {
+	public void maskAndAddStringFromArgsWithDefault(Map<String, ?> args, String key, String defval) {
 		Object value = args.get(key);
 		if (value != null) {
 			addString(key, HtmlUtil.maskForWeb(value.toString()));
@@ -128,8 +136,8 @@ public class WebPart implements Writable {
 	/**
 	 * 
 	 */
-	public void addSelect(String key, Class valueClass, String value) {
-		WebValueManager wvMgr = WebValueManager.getInstance();
+	public void addSelect(String key, Class<?> valueClass, String value) {
+		WebValueManager wvMgr = webValueManager;
 		WebValue wv = wvMgr.getWebValue(valueClass, value);
 		if (wv != null) {
 			addSelect(key, wv);
@@ -139,8 +147,8 @@ public class WebPart implements Writable {
 	/**
 	 * 
 	 */
-	public void addSelect(String key, Class valueClass, String value, EnumValue defval) {
-		WebValueManager wvMgr = WebValueManager.getInstance();
+	public void addSelect(String key, Class<?> valueClass, String value, EnumValue defval) {
+		WebValueManager wvMgr = webValueManager;
 		WebValue wv = wvMgr.getWebValue(valueClass, value);
 		if (wv != null) {
 			addSelect(key, wv);

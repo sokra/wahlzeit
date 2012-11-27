@@ -20,39 +20,25 @@
 
 package org.wahlzeit.agents;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+
+import javax.inject.Inject;
 
 import org.wahlzeit.services.SysLog;
+import org.wahlzeit.utils.Lifecycle;
 
 /**
  * 
  * @author dirkriehle
  *
  */
-public class AgentManager {
+public class AgentManager implements Lifecycle {
 	
-	/**
-	 * 
-	 */
-	protected static AgentManager instance = null;
-	
-	/**
-	 * @methodtype initialization
-	 */
-	protected static void initInstance() {
-		getInstance().addAgent(new NotifyAboutPraiseAgent());
-	}
-	
-	/**
-	 * 
-	 */
-	public static synchronized AgentManager getInstance() {
-		if (instance == null) {
-			instance = new AgentManager();
-			initInstance();
-		}
-		return instance;
-	}
+	@Inject
+	protected SysLog sysLog;
 	
 	/**
 	 * 
@@ -60,10 +46,12 @@ public class AgentManager {
 	protected Map<String, AgentThread> threads = new HashMap<String, AgentThread>();
 	
 	/**
-	 * 
+	 * @methodtype initialization
 	 */
-	protected AgentManager() {
-		// do nothing
+	@Inject
+	protected AgentManager(Set<Agent> agents) {
+		for(Agent agent: agents)
+			addAgent(agent);
 	}
 	
 	/**
@@ -95,7 +83,7 @@ public class AgentManager {
 	/**
 	 * 
 	 */
-	public void startAllThreads() {
+	public void startUp() {
 		for (Iterator<AgentThread> i = threads.values().iterator(); i.hasNext(); ) {
 			AgentThread thread = i.next();
 			startThread(thread);
@@ -115,13 +103,13 @@ public class AgentManager {
 	public void startThread(AgentThread thread) {
 		thread.start();
 		String name = thread.getAgent().getName();
-		SysLog.logValueWithInfo("agent", name, "agent/thread was started");
+		sysLog.logValueWithInfo("agent", name, "agent/thread was started");
 	}
 	
 	/**
 	 * 
 	 */
-	public void stopAllThreads() {
+	public void shutDown() {
 		for (Iterator<AgentThread> i = threads.values().iterator(); i.hasNext(); ) {
 			AgentThread thread = i.next();
 			stopThread(thread);
@@ -152,7 +140,7 @@ public class AgentManager {
 		}
 
 		String agentName = thread.getAgent().getName();
-		SysLog.logValueWithInfo("agent", agentName, "agent/thread was stopped");
+		sysLog.logValueWithInfo("agent", agentName, "agent/thread was stopped");
 	}
 
 }

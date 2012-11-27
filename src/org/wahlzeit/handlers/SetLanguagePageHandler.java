@@ -20,11 +20,13 @@
 
 package org.wahlzeit.handlers;
 
-import java.util.*;
+import java.util.Map;
+
+import javax.inject.Inject;
 
 import org.wahlzeit.model.AccessRights;
-import org.wahlzeit.model.ModelConfig;
 import org.wahlzeit.model.LanguageConfigs;
+import org.wahlzeit.model.ModelConfig;
 import org.wahlzeit.model.UserSession;
 import org.wahlzeit.services.Language;
 import org.wahlzeit.utils.HtmlUtil;
@@ -39,25 +41,28 @@ import org.wahlzeit.webparts.WebPart;
  */
 public class SetLanguagePageHandler extends AbstractWebPageHandler {
 	
+	@Inject
+	protected LanguageConfigs languageConfigs;
+	
 	/**
 	 * 
 	 */
-	public SetLanguagePageHandler() {
+	protected SetLanguagePageHandler() {
 		initialize(PartUtil.SHOW_NOTE_PAGE_FILE, AccessRights.GUEST);
 	}
 	
 	/**
 	 * 
 	 */
-	protected String doHandleGet(UserSession ctx, String link, Map args) {
-		ModelConfig result = LanguageConfigs.get(Language.ENGLISH);
+	protected String doHandleGet(UserSession ctx, String link, Map<String, ?> args) {
+		ModelConfig result = languageConfigs.get(Language.ENGLISH);
 		
 		if (link.equals(PartUtil.SET_GERMAN_LANGUAGE_PAGE_NAME)) {
-			result = LanguageConfigs.get(Language.GERMAN);
+			result = languageConfigs.get(Language.GERMAN);
 		} else if (link.equals(PartUtil.SET_SPANISH_LANGUAGE_PAGE_NAME)) {
-			result = LanguageConfigs.get(Language.ENGLISH);
+			result = languageConfigs.get(Language.ENGLISH);
 		} else if (link.equals(PartUtil.SET_JAPANESE_LANGUAGE_PAGE_NAME)) {
-			result = LanguageConfigs.get(Language.JAPANESE);
+			result = languageConfigs.get(Language.JAPANESE);
 		}
 		
 		ctx.setConfiguration(result);

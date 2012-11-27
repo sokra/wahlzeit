@@ -20,14 +20,15 @@
 
 package org.wahlzeit.main;
 
-import java.io.*;
+import java.io.IOException;
 
-import javax.servlet.*;
-import javax.servlet.http.*;
+import javax.inject.Inject;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.wahlzeit.handlers.PartUtil;
 import org.wahlzeit.model.UserLog;
-import org.wahlzeit.services.SysLog;
 
 
 /**
@@ -36,6 +37,9 @@ import org.wahlzeit.services.SysLog;
  *
  */
 public class AdminServlet extends AbstractServlet {
+	
+	@Inject
+	protected UserLog userLog;
 
 	/**
 	 * 
@@ -47,15 +51,15 @@ public class AdminServlet extends AbstractServlet {
 	 */
 	public void myGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		String link = request.getRequestURI();
-		UserLog.logValue("requested", link);
+		userLog.logValue("requested", link);
 		if (isLocalHost(request)) {
-			Wahlzeit.requestStop();
+			main.requestStop();
 			displayNullPage(request, response);
 		} else if (link.length() == "/admin".length()){
-			SysLog.logValue("redirect", PartUtil.DEFAULT_PAGE_NAME);
+			sysLog.logValue("redirect", PartUtil.DEFAULT_PAGE_NAME);
 			redirectRequest(response, PartUtil.DEFAULT_PAGE_NAME);
 		} else {
-			SysLog.logValue("redirect", "../" + PartUtil.DEFAULT_PAGE_NAME);
+			sysLog.logValue("redirect", "../" + PartUtil.DEFAULT_PAGE_NAME);
 			redirectRequest(response, "../" + PartUtil.DEFAULT_PAGE_NAME);
 		}
 	}

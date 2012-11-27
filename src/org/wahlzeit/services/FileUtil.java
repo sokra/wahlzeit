@@ -20,7 +20,11 @@
 
 package org.wahlzeit.services;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+
+import javax.inject.Inject;
 
 /**
  * Some convenience methods for dealing with the file system.
@@ -30,22 +34,28 @@ import java.io.*;
  */
 public class FileUtil {
 	
+	@Inject
+	protected SysConfig sysConfig;
+	
+	@Inject
+	protected SysLog sysLog;
+	
 	/**
 	 * 
 	 */
-	public static String getTmplFileName(Language lang, String fileName) {
+	public String getTmplFileName(Language lang, String fileName) {
 		String sfn = lang.asIsoCode() + File.separator + fileName;
-		return SysConfig.getTemplatesDir().getFullConfigFileName(sfn);
+		return sysConfig.getTemplatesDir().getFullConfigFileName(sfn);
 	}
 	
 	/**
 	 * 
 	 */
-	public static String safelyReadFileAsString(String fileName) throws IOException {
+	public String safelyReadFileAsString(String fileName) throws IOException {
 		String result = "";
 		
 		File file = new File(fileName);
-		SysLog.logValueWithInfo("file name", fileName, "opened file for safe string reading");
+		sysLog.logValueWithInfo("file name", fileName, "opened file for safe string reading");
 
 		FileReader reader = null;
 		try {
@@ -55,7 +65,7 @@ public class FileUtil {
 			char[] readBuffer = new char[50000];
 			int status = reader.read(readBuffer);
 
-			SysLog.logValueWithInfo("file size", Integer.toString(status), "read file");
+			sysLog.logValueWithInfo("file size", Integer.toString(status), "read file");
 			
 			if (status != -1) {
 				result = new String(readBuffer, 0, status);

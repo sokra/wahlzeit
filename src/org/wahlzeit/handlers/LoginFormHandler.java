@@ -20,7 +20,9 @@
 
 package org.wahlzeit.handlers;
 
-import java.util.*;
+import java.util.Map;
+
+import javax.inject.Inject;
 
 import org.wahlzeit.model.AccessRights;
 import org.wahlzeit.model.User;
@@ -39,10 +41,16 @@ import org.wahlzeit.webparts.WebPart;
  */
 public class LoginFormHandler extends AbstractWebFormHandler {
 	
+	@Inject
+	protected UserLog userLog;
+	
+	@Inject
+	protected UserManager userManager;
+	
 	/**
 	 *
 	 */
-	public LoginFormHandler() {
+	protected LoginFormHandler() {
 		initialize(PartUtil.LOGIN_FORM_FILE, AccessRights.GUEST);
 	}
 
@@ -50,7 +58,7 @@ public class LoginFormHandler extends AbstractWebFormHandler {
 	 * 
 	 */
 	protected void doMakeWebPart(UserSession ctx, WebPart part) {
-		Map args = ctx.getSavedArgs();
+		Map<String, ?> args = ctx.getSavedArgs();
 		part.addStringFromArgs(args, UserSession.MESSAGE);
 		
 //		part.addString(WebContext.MESSAGE, ctx.getMessage());
@@ -61,11 +69,9 @@ public class LoginFormHandler extends AbstractWebFormHandler {
 	/**
 	 * 
 	 */
-	protected String doHandlePost(UserSession ctx, Map args) {
+	protected String doHandlePost(UserSession ctx, Map<String, ?> args) {
 		String userName = ctx.getAndSaveAsString(args, User.NAME);
 		String password = ctx.getAndSaveAsString(args, User.PASSWORD);
-		
-		UserManager userManager = UserManager.getInstance();
 		
 		if (StringUtil.isNullOrEmptyString(userName)) {
 			ctx.setMessage(ctx.cfg().getFieldIsMissing());
@@ -97,18 +103,18 @@ public class LoginFormHandler extends AbstractWebFormHandler {
 					user.setConfirmed();
 					ctx.setTwoLineMessage(ctx.cfg().getConfirmAccountSucceeded(), ctx.cfg().getContinueWithShowUserHome());
 				} else {
-					UserManager.getInstance().emailConfirmationRequest(ctx, user);
+					userManager.emailConfirmationRequest(ctx, user);
 					ctx.setTwoLineMessage(ctx.cfg().getConfirmAccountFailed(), ctx.cfg().getConfirmationEmailWasSent());
 				}
 				ctx.clearConfirmationCode();
 			} else {
-				UserManager.getInstance().emailConfirmationRequest(ctx, user);
+				userManager.emailConfirmationRequest(ctx, user);
 				ctx.setTwoLineMessage(ctx.cfg().getConfirmationEmailWasSent(), ctx.cfg().getContinueWithShowUserHome());
 			}
 			return PartUtil.SHOW_NOTE_PAGE_NAME;
 		}
 		
-		UserLog.logPerformedAction("Login");
+		userLog.logPerformedAction("Login");
 		
 		return PartUtil.SHOW_USER_HOME_PAGE_NAME;
 	}

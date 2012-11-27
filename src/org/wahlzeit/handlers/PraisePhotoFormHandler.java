@@ -20,7 +20,9 @@
 
 package org.wahlzeit.handlers;
 
-import java.util.*;
+import java.util.Map;
+
+import javax.inject.Inject;
 
 import org.wahlzeit.agents.Agent;
 import org.wahlzeit.agents.AgentManager;
@@ -42,10 +44,19 @@ import org.wahlzeit.webparts.WebPart;
  */
 public class PraisePhotoFormHandler extends AbstractWebFormHandler {
 	
+	@Inject
+	protected UserLog userLog;
+	
+	@Inject
+	protected PhotoManager photoManager;
+
+	@Inject
+	protected AgentManager agentManager;
+	
 	/**
 	 * 
 	 */
-	public PraisePhotoFormHandler() {
+	protected PraisePhotoFormHandler() {
 		initialize(PartUtil.PRAISE_PHOTO_FORM_FILE, AccessRights.GUEST);
 	}
 	
@@ -63,18 +74,18 @@ public class PraisePhotoFormHandler extends AbstractWebFormHandler {
 	/**
 	 * 
 	 */
-	protected boolean isWellFormedPost(UserSession ctx, Map args) {
+	protected boolean isWellFormedPost(UserSession ctx, Map<String, ?> args) {
 		String photoId = ctx.getAsString(args, Photo.ID);
-		Photo photo = PhotoManager.getPhoto(photoId);
+		Photo photo = photoManager.getPhoto(photoId);
 		return photo != null;
 	}
 	
 	/**
 	 * 
 	 */
-	protected String doHandlePost(UserSession ctx, Map args) {
+	protected String doHandlePost(UserSession ctx, Map<String, ?> args) {
 		String photoId = ctx.getAsString(args, Photo.ID);
-		Photo photo = PhotoManager.getPhoto(photoId);
+		Photo photo = photoManager.getPhoto(photoId);
 		String praise = ctx.getAsString(args, Photo.PRAISE);
 
 		boolean wasPraised = false;
@@ -85,7 +96,7 @@ public class PraisePhotoFormHandler extends AbstractWebFormHandler {
 				ctx.addPraisedPhoto(photo);
 				wasPraised = true;
 				if (photo.getOwnerNotifyAboutPraise()) {
-					Agent agent = AgentManager.getInstance().getAgent(NotifyAboutPraiseAgent.NAME);
+					Agent agent = agentManager.getAgent(NotifyAboutPraiseAgent.NAME);
 					NotifyAboutPraiseAgent notify = (NotifyAboutPraiseAgent) agent; 
 					notify.addForNotify(photo);
 				}
@@ -94,7 +105,7 @@ public class PraisePhotoFormHandler extends AbstractWebFormHandler {
 		
 		ctx.setPriorPhoto(photo);
 
-		UserLog.logPerformedAction(wasPraised ? "PraisePhoto" : "SkipPhoto");
+		userLog.logPerformedAction(wasPraised ? "PraisePhoto" : "SkipPhoto");
 		
 		return PartUtil.SHOW_PHOTO_PAGE_NAME;
 	}

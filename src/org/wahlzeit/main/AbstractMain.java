@@ -20,122 +20,101 @@
 
 package org.wahlzeit.main;
 
-import org.wahlzeit.services.*;
+import java.util.Set;
+
+import javax.inject.Inject;
+
+import org.wahlzeit.model.Saveable;
+import org.wahlzeit.services.ContextProvider;
+import org.wahlzeit.services.Session;
+import org.wahlzeit.services.SysConfig;
+import org.wahlzeit.services.SysLog;
+import org.wahlzeit.services.SysSession;
+import org.wahlzeit.utils.Lifecycle;
+
+import com.google.inject.Injector;
 
 /**
  * 
  * @author dirkriehle
  *
  */
-public abstract class AbstractMain {
+public abstract class AbstractMain implements Main {
+	
+	@Inject
+	protected SysLog sysLog;
+	
+	@Inject
+	protected SysConfig sysConfig;
+	
+	@Inject
+	protected ContextProvider contextProvider;
+	
+	@Inject
+	private Injector injector;
+	
+	@Inject
+	protected Set<Lifecycle> lifecycleObjects;
+	
+	@Inject
+	protected Set<Saveable> saveables;
+	
+	@Inject
+	protected SysSession.Factory sysSessionFactory;
 	
 	/**
 	 * 
 	 */
-	protected static AbstractMain instance;
+	protected boolean isToStopFlag = false;
 	
 	/**
 	 * 
 	 */
-	protected static boolean isToStopFlag = false;
-
-	/**
-	 * 
-	 */
-	protected static boolean isInProductionFlag = false;
-	
-	/**
-	 * 
-	 */
-	public static void requestStop() {
-		synchronized(instance) {
-			isToStopFlag = true;
-			instance.notify();
-		}
+	@Override
+	public synchronized void requestStop() {
+		isToStopFlag = true;
+		this.notify();
 	}
 	
 	/**
 	 * 
 	 */
-	public static boolean isShuttingDown() {
+	@Override
+	public boolean isShuttingDown() {
 		return isToStopFlag;
 	}
-		
-	/**
-	 * 
-	 */
-	public static boolean isInProduction() {
-		return isInProductionFlag;
-	}
 	
 	/**
 	 * 
 	 */
-	public synchronized void run(String[] argv) {
-		handleArgv(argv);
-		
+	@Override
+	public synchronized void run() {
 		try {
 			startUp();
 			execute();
 		} catch(Exception ex) {
-			SysLog.logThrowable(ex);
+			sysLog.logThrowable(ex);
 		}
 
 		try {
 			shutDown();
 		} catch (Exception ex) {
-			SysLog.logThrowable(ex);
+			sysLog.logThrowable(ex);
+		}
+
+		for(Saveable saveable: saveables) {
+			saveable.save();			
 		}
 	} 
 
 	/**
 	 * 
 	 */
-	protected void handleArgv(String[] argv) {
-		for (int i = 0; i < argv.length; i++) {
-			String arg = argv[i];
-			if (arg.equals("-P") || arg.equals("--production")) {
-				AbstractMain.isInProductionFlag = true;
-			} else if (arg.equals("-D") || arg.equals("--development")) {
-				AbstractMain.isInProductionFlag = false;
-			}
-		}		
-	}
-
-	/**
-	 * 
-	 */
 	protected void startUp() throws Exception {
-		SysLog.initialize(isInProductionFlag);
-		SysConfig.setInstance(createSysConfig());
-		
-		Session ctx = new SysSession("system");
-		ContextManager.setThreadLocalContext(ctx);
-	}
-	
-	/**
-	 * 
-	 */
-	protected SysConfig createSysConfig() {
-		if (isInProduction()) {
-			return createProdSysConfig();
-		} else {
-			return createDevSysConfig();
-		}
-	}
-	
-	/**
-	 * 
-	 */
-	protected SysConfig createProdSysConfig() {
-		return createDevSysConfig(); 
-	}
-	
-	/**
-	 * 
-	 */
-	protected SysConfig createDevSysConfig() {
-		return new SysConfig("localhost", "8585");
+		Session ctx = sysSessionFactory.create("system");
+		contextProvider.set(ctx);
+		for(Lifecycle obj: lifecycleObjects)
+			obj.startUp();
 	}
 	
 	/**
@@ -149,7 +128,8 @@ public abstract class AbstractMain {
 	 * 
 	 */
 	protected void shutDown() throws Exception {
-		SysConfig.dropInstance();
+		for(Lifecycle obj: lifecycleObjects)
+			obj.shutDown();
 	}
 	
 }

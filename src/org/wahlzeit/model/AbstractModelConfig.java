@@ -20,11 +20,20 @@
 
 package org.wahlzeit.model;
 
-import java.io.*;
-import java.text.*;
+import java.io.File;
+import java.io.IOException;
+import java.text.DateFormat;
+import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 
-import org.wahlzeit.services.*;
-import org.wahlzeit.utils.*;
+import javax.inject.Inject;
+import javax.inject.Named;
+
+import org.wahlzeit.services.AbstractConfig;
+import org.wahlzeit.services.EmailAddress;
+import org.wahlzeit.services.FileUtil;
+import org.wahlzeit.services.Language;
+import org.wahlzeit.utils.EnumValue;
 
 /**
  * A generic implementation of ModelConfig.
@@ -34,6 +43,9 @@ import org.wahlzeit.utils.*;
  *
  */
 public abstract class AbstractModelConfig extends AbstractConfig implements ModelConfig {
+	
+	protected final FileUtil fileUtil;
+	protected final boolean isInProductionMode;
 	
 	/**
 	 * 
@@ -45,8 +57,10 @@ public abstract class AbstractModelConfig extends AbstractConfig implements Mode
 	/**
 	 * 
 	 */
-	protected AbstractModelConfig() {
-		// do nothing
+	@Inject 
+	protected AbstractModelConfig(@Named("production") boolean isInProductionMode, FileUtil fileUtil) {
+		this.isInProductionMode = isInProductionMode;
+		this.fileUtil = fileUtil;
 	}
 	
 	/**
@@ -58,10 +72,10 @@ public abstract class AbstractModelConfig extends AbstractConfig implements Mode
 		praiseFormatter = myPraiseFormatter;
 		
 		try {
-			String basicFileName = FileUtil.getTmplFileName(language, "ModelConfig.properties");
+			String basicFileName = fileUtil.getTmplFileName(language, "ModelConfig.properties");
 			loadProperties(basicFileName);
 
-			String customFileName = FileUtil.getTmplFileName(language, "CustomModelConfig.properties");
+			String customFileName = fileUtil.getTmplFileName(language, "CustomModelConfig.properties");
 			File customFile = new File(customFileName);
 			if (customFile.exists()) {
 				loadProperties(customFile);
@@ -80,7 +94,7 @@ public abstract class AbstractModelConfig extends AbstractConfig implements Mode
 		String footerPhotoSizePart2 = doGetValue("FooterPhotoSizePart2");
 		String footerPhotoSizePart3 = doGetValue("FooterPhotoSizePart3");
 		String footerPhotoSizePart4 = doGetValue("FooterPhotoSizePart4");
-		String footerDebugPart = SysLog.isInDevelopmentMode() ? menuDash + doGetValue("FooterDebugPart") : "";
+		String footerDebugPart = !isInProductionMode ? menuDash + doGetValue("FooterDebugPart") : "";
 		
 		doSetValue("PageFooter0", footerCommunityPart + menuDash + footerAboutPart + menuDash + footerLanguagePart + menuDash + footerPhotoSizePart0 + footerDebugPart);
 		doSetValue("PageFooter1", footerCommunityPart + menuDash + footerAboutPart + menuDash + footerLanguagePart + menuDash + footerPhotoSizePart1 + footerDebugPart);

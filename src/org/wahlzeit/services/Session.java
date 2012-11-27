@@ -20,6 +20,8 @@
 
 package org.wahlzeit.services;
 
+import javax.inject.Inject;
+
 
 /**
  * A Context object maintains a DatabaseConnection and helps track processing time.
@@ -30,6 +32,12 @@ package org.wahlzeit.services;
  */
 public class Session {
 
+	@Inject
+	protected DatabaseConnectionPool pool;
+
+	@Inject
+	protected SysLog sysLog;
+	
 	/**
 	 * Session state
 	 */
@@ -44,13 +52,6 @@ public class Session {
 	 * processing time for requests
 	 */
 	protected long processingTime = 0;
-	
-	/**
-	 * 
-	 */
-	protected Session() {
-		// do nothing
-	}
 	
 	/**
 	 * 
@@ -90,9 +91,9 @@ public class Session {
 	public DatabaseConnection getDatabaseConnection() {
 		if (dbConnection == null) {
 			try {
-				dbConnection = DatabaseConnection.getInstance();
+				dbConnection = pool.getInstance();
 			} catch (Throwable t) {
-				SysLog.logThrowable(t);
+				sysLog.logThrowable(t);
 			}
 		}
 		
@@ -104,7 +105,7 @@ public class Session {
 	 */
 	public void dropDatabaseConnection() {
 		if (dbConnection != null) {
-			DatabaseConnection.dropInstance(dbConnection);
+			pool.dropInstance(dbConnection);
 			dbConnection = null;
 		}
 	}

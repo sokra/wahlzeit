@@ -20,17 +20,28 @@
 
 package org.wahlzeit.main;
 
-import java.io.*;
-import java.util.*;
-import java.net.*;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.net.InetAddress;
+import java.util.Iterator;
+import java.util.Map;
 
-import javax.servlet.*;
-import javax.servlet.http.*;
+import javax.inject.Inject;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
-import org.wahlzeit.model.*;
-import org.wahlzeit.services.*;
-import org.wahlzeit.utils.*;
-import org.wahlzeit.webparts.*;
+import org.wahlzeit.model.LanguageConfigs;
+import org.wahlzeit.model.UserSession;
+import org.wahlzeit.services.ContextProvider;
+import org.wahlzeit.services.Language;
+import org.wahlzeit.services.Session;
+import org.wahlzeit.services.SysConfig;
+import org.wahlzeit.services.SysLog;
+import org.wahlzeit.utils.StringUtil;
+import org.wahlzeit.webparts.WebPart;
 
 /**
  * 
@@ -38,6 +49,24 @@ import org.wahlzeit.webparts.*;
  *
  */
 public abstract class AbstractServlet extends HttpServlet {
+	
+	@Inject
+	protected ContextProvider contextProvider;
+	
+	@Inject
+	protected Main main;
+	
+	@Inject
+	protected SysConfig sysConfig;
+	
+	@Inject
+	protected SysLog sysLog;
+	
+	@Inject
+	protected LanguageConfigs languageConfigs;
+	
+	@Inject
+	protected UserSession.Factory userSessionFactory;
 	
 	/**
 	 * 
@@ -71,16 +100,16 @@ public abstract class AbstractServlet extends HttpServlet {
 	 */
 	public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		UserSession ctx = ensureWebContext(request);	
-		ContextManager.setThreadLocalContext(ctx);
+		contextProvider.set(ctx);
 		
-		if (Wahlzeit.isShuttingDown() || (ctx == null)) {
+		if (main.isShuttingDown() || (ctx == null)) {
 			displayNullPage(request, response);
 		} else {
 			myGet(request, response);
 			ctx.dropDatabaseConnection();
 		}
 
-		ContextManager.dropThreadLocalContext();
+		contextProvider.drop();
 	}
 	
 	/**
@@ -95,16 +124,16 @@ public abstract class AbstractServlet extends HttpServlet {
 	 */
 	public void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		UserSession ctx = ensureWebContext(request);	
-		ContextManager.setThreadLocalContext(ctx);
+		contextProvider.set(ctx);
 		
-		if (Wahlzeit.isShuttingDown() || (ctx == null)) {
+		if (main.isShuttingDown() || (ctx == null)) {
 			displayNullPage(request, response);
 		} else {
 			myPost(request, response);
 			ctx.dropDatabaseConnection();
 		}
 
-		ContextManager.dropThreadLocalContext();
+		contextProvider.drop();
 	}
 	
 	/**
@@ -123,18 +152,18 @@ public abstract class AbstractServlet extends HttpServlet {
 		if (result == null) {
 			try {
 				String ctxName = "ctx" + getNextSessionId();
-				result = new UserSession(ctxName);
-				SysLog.logCreatedObject("WebContext", ctxName);
+				result = userSessionFactory.create(ctxName);
+				sysLog.logCreatedObject("WebContext", ctxName);
 
 				// yes, "Referer"; typo in original standard documentation
 				String referrer = request.getHeader("Referer");
-				SysLog.logInfo("request referrer: " + referrer);
+				sysLog.logInfo("request referrer: " + referrer);
 
 				if (request.getLocale().getLanguage().equals("de")) {
-					result.setConfiguration(LanguageConfigs.get(Language.GERMAN));
+					result.setConfiguration(languageConfigs.get(Language.GERMAN));
 				}
 			} catch (Exception ex) {
-				SysLog.logThrowable(ex);
+				sysLog.logThrowable(ex);
 			}
 			
 			httpSession.setAttribute("context", result);
@@ -172,7 +201,7 @@ public abstract class AbstractServlet extends HttpServlet {
 	protected void configureResponse(Session ctx, HttpServletResponse response, WebPart result) throws IOException {
 		long processingTime = ctx.getProcessingTime();
 		result.addString("processingTime", StringUtil.asStringInSeconds((processingTime == 0) ? 1 : processingTime));
-		SysLog.logValue("proctime", String.valueOf(processingTime));
+		sysLog.logValue("proctime", String.valueOf(processingTime));
 		
 		response.setContentType("text/html");
 
@@ -200,9 +229,9 @@ public abstract class AbstractServlet extends HttpServlet {
 	/**
 	 * 
 	 */
-	protected String getRequestArgsAsString(UserSession ctx, Map args) {
+	protected String getRequestArgsAsString(UserSession ctx, Map<String, ?> args) {
 		StringBuffer result = new StringBuffer(96);
-		for (Iterator i = args.keySet().iterator(); i.hasNext(); ) {
+		for (Iterator<String> i = args.keySet().iterator(); i.hasNext(); ) {
 			String key = i.next().toString();
 			String value = ctx.getAsString(args, key);
 			result.append(key + "=" + value);

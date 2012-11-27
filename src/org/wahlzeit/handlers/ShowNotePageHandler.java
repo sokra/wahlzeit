@@ -20,7 +20,7 @@
 
 package org.wahlzeit.handlers;
 
-import java.util.*;
+import java.util.Map;
 
 import org.wahlzeit.model.AccessRights;
 import org.wahlzeit.model.UserSession;
@@ -39,14 +39,14 @@ public class ShowNotePageHandler extends AbstractWebPageHandler {
 	/**
 	 *
 	 */
-	public ShowNotePageHandler() {
+	protected ShowNotePageHandler() {
 		initialize(PartUtil.SHOW_NOTE_PAGE_FILE, AccessRights.GUEST);
 	}
 	
 	/**
 	 * 
 	 */
-	protected boolean isWellFormedGet(UserSession ctx, String link, Map args) {
+	protected boolean isWellFormedGet(UserSession ctx, String link, Map<String, ?> args) {
 		return hasSavedMessage(ctx);
 	}
 	

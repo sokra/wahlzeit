@@ -35,7 +35,7 @@ public class NullFormHandler extends AbstractWebFormHandler {
 	/**
 	 * 
 	 */
-	public NullFormHandler() {
+	protected NullFormHandler() {
 		initialize(PartUtil.NULL_FORM_FILE, AccessRights.GUEST);
 	}
 	

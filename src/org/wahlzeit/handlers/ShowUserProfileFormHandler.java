@@ -20,7 +20,7 @@
 
 package org.wahlzeit.handlers;
 
-import java.util.*;
+import java.util.Map;
 
 import org.wahlzeit.model.AccessRights;
 import org.wahlzeit.model.Photo;
@@ -41,7 +41,7 @@ public class ShowUserProfileFormHandler extends AbstractWebFormHandler {
 	/**
 	 *
 	 */
-	public ShowUserProfileFormHandler() {
+	protected ShowUserProfileFormHandler() {
 		initialize(PartUtil.SHOW_USER_PROFILE_FORM_FILE, AccessRights.USER);
 	}
 	
@@ -68,7 +68,7 @@ public class ShowUserProfileFormHandler extends AbstractWebFormHandler {
 	/**
 	 * 
 	 */
-	protected String doHandlePost(UserSession ctx, Map args) {
+	protected String doHandlePost(UserSession ctx, Map<String, ?> args) {
 		return PartUtil.EDIT_USER_PROFILE_PAGE_NAME;
 	}
 	

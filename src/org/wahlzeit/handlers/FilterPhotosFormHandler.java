@@ -20,11 +20,17 @@
 
 package org.wahlzeit.handlers;
 
-import java.util.*;
+import java.util.Map;
 
-import org.wahlzeit.model.*;
-import org.wahlzeit.utils.*;
-import org.wahlzeit.webparts.*;
+import javax.inject.Inject;
+
+import org.wahlzeit.model.AccessRights;
+import org.wahlzeit.model.PhotoFilter;
+import org.wahlzeit.model.Tags;
+import org.wahlzeit.model.UserLog;
+import org.wahlzeit.model.UserSession;
+import org.wahlzeit.utils.StringUtil;
+import org.wahlzeit.webparts.WebPart;
 
 /**
  * 
@@ -33,10 +39,13 @@ import org.wahlzeit.webparts.*;
  */
 public class FilterPhotosFormHandler extends AbstractWebFormHandler {
 	
+	@Inject
+	protected UserLog userLog;
+	
 	/**
 	 * 
 	 */
-	public FilterPhotosFormHandler() {
+	protected FilterPhotosFormHandler() {
 		initialize(PartUtil.FILTER_PHOTOS_FORM_FILE, AccessRights.GUEST);
 	}
 	
@@ -53,7 +62,7 @@ public class FilterPhotosFormHandler extends AbstractWebFormHandler {
 	/**
 	 * 
 	 */
-	protected String doHandlePost(UserSession ctx, Map args) {
+	protected String doHandlePost(UserSession ctx, Map<String, ?> args) {
 		PhotoFilter filter = ctx.getPhotoFilter();
 
 		String un = ctx.getAsString(args, PhotoFilter.USER_NAME);
@@ -66,7 +75,7 @@ public class FilterPhotosFormHandler extends AbstractWebFormHandler {
 			filter.setTags(new Tags(tags));
 		}
 		
-		UserLog.logPerformedAction("FilterPhotos");
+		userLog.logPerformedAction("FilterPhotos");
 		
 		return PartUtil.SHOW_PHOTO_PAGE_NAME;
 	}

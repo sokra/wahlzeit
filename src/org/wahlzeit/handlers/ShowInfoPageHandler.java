@@ -20,9 +20,13 @@
 
 package org.wahlzeit.handlers;
 
+import javax.inject.Inject;
+
 import org.wahlzeit.model.AccessRights;
 import org.wahlzeit.model.UserSession;
 import org.wahlzeit.webparts.WebPart;
+
+import com.google.inject.Injector;
 
 
 /**
@@ -40,9 +44,7 @@ public class ShowInfoPageHandler extends AbstractWebPageHandler {
 	/**
 	 *
 	 */
-	public ShowInfoPageHandler(AccessRights myRights, String myInfoTmplName) {
-		initialize(PartUtil.SHOW_INFO_PAGE_FILE, myRights);
-		infoTmplName = myInfoTmplName;
+	protected ShowInfoPageHandler() {
 	}
 	
 	/**
@@ -50,6 +52,23 @@ public class ShowInfoPageHandler extends AbstractWebPageHandler {
 	 */
 	protected void makeWebPageBody(UserSession ctx, WebPart page) {
 		page.addWritable("info", createWebPart(ctx, infoTmplName));
+	}
+	
+	
+	/**
+	 * 
+	 */
+	public static class Factory {
+		
+		@Inject
+		protected Injector injector;
+		
+		public ShowInfoPageHandler create(AccessRights myRights, String myInfoTmplName) {
+			ShowInfoPageHandler handler = injector.getInstance(ShowInfoPageHandler.class);
+			handler.initialize(PartUtil.SHOW_INFO_PAGE_FILE, myRights);
+			handler.infoTmplName = myInfoTmplName;
+			return handler;
+		}
 	}
 
 }

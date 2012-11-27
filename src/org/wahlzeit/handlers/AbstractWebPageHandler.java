@@ -20,10 +20,12 @@
 
 package org.wahlzeit.handlers;
 
-import org.wahlzeit.model.*;
-import org.wahlzeit.services.*;
+import org.wahlzeit.model.Client;
+import org.wahlzeit.model.UserSession;
+import org.wahlzeit.services.ConfigDir;
+import org.wahlzeit.services.Language;
 import org.wahlzeit.utils.HtmlUtil;
-import org.wahlzeit.webparts.*;
+import org.wahlzeit.webparts.WebPart;
 
 /**
  * 
@@ -45,8 +47,8 @@ public abstract class AbstractWebPageHandler extends AbstractWebPartHandler impl
 	public WebPart makeWebPage(UserSession ctx) {
 		WebPart result = createWebPart(ctx);
 		
-		String siteUrl = SysConfig.getSiteUrlAsString();
-		ConfigDir staticDir = SysConfig.getStaticDir();
+		String siteUrl = sysConfig.getSiteUrlAsString();
+		ConfigDir staticDir = sysConfig.getStaticDir();
 		String stylesheetUrl = siteUrl + staticDir.getFullConfigFileName("wahlzeit.css");
 		result.addString("stylesheet", stylesheetUrl);
 		String javascriptUrl = siteUrl + staticDir.getFullConfigFileName("wahlzeit.js");
@@ -78,12 +80,12 @@ public abstract class AbstractWebPageHandler extends AbstractWebPartHandler impl
 		Language langValue = ctx.cfg().getLanguage();
 		if (isToShowAds(ctx)) {
 			WebPart heading = createWebPart(ctx, PartUtil.BANNER_INFO_FILE);
-			String imgTag = HtmlUtil.asImg(SysConfig.getLogoImageAsUrlString(langValue));
-			heading.addString("logo", HtmlUtil.asHref(SysConfig.getSiteUrlAsString(), imgTag));
+			String imgTag = HtmlUtil.asImg(sysConfig.getLogoImageAsUrlString(langValue));
+			heading.addString("logo", HtmlUtil.asHref(sysConfig.getSiteUrlAsString(), imgTag));
 			page.addWritable("heading", heading);
 		} else {
-			String heading = HtmlUtil.asImg(SysConfig.getHeadingImageAsUrlString(langValue));
-			heading = HtmlUtil.asHref(SysConfig.getSiteUrlAsString(), heading);
+			String heading = HtmlUtil.asImg(sysConfig.getHeadingImageAsUrlString(langValue));
+			heading = HtmlUtil.asHref(sysConfig.getSiteUrlAsString(), heading);
 			page.addString("heading", heading);
 		}
 	}

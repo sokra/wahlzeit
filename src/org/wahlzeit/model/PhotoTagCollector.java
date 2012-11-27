@@ -20,9 +20,9 @@
 
 package org.wahlzeit.model;
 
-import java.util.*;
+import java.util.Set;
 
-import org.wahlzeit.utils.*;
+import org.wahlzeit.utils.StringUtil;
 
 /**
  * A PhotoTagCollector provides a method to collect all tags for a given photo.

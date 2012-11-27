@@ -20,7 +20,14 @@
 
 package org.wahlzeit.agents;
 
-import org.wahlzeit.services.*;
+import javax.inject.Inject;
+
+import org.wahlzeit.services.ContextProvider;
+import org.wahlzeit.services.Session;
+import org.wahlzeit.services.SysLog;
+import org.wahlzeit.services.SysSession;
+
+import com.google.inject.Injector;
 
 /**
  * 
@@ -28,6 +35,18 @@ import org.wahlzeit.services.*;
  *
  */
 public abstract class Agent implements Runnable {
+	
+	@Inject
+	protected Injector injector;
+	
+	@Inject
+	protected SysLog sysLog;
+	
+	@Inject
+	protected ContextProvider contextProvider;
+	
+	@Inject
+	protected SysSession.Factory sysSessionFactory;
 	
 	/**
 	 * 
@@ -76,18 +95,18 @@ public abstract class Agent implements Runnable {
 	 */
 	public void run() {
 		synchronized(Agent.class) {
-			Session ctx = new SysSession("agent" + id++);
-			ContextManager.setThreadLocalContext(ctx);
+			Session ctx = sysSessionFactory.create("agent" + id++);
+			contextProvider.set(ctx);
 		}
 
 		while(!isToStop) {
 			try {
-				SysLog.logInfo("going to sleep for: " + (period / 1000) + " seconds");
+				sysLog.logInfo("going to sleep for: " + (period / 1000) + " seconds");
 				Thread.sleep(period);
 			} catch (Exception ex) {
 				// do nothing
 			}
-			SysLog.logInfo("just woke up");
+			sysLog.logInfo("just woke up");
 			doRun();
 		}
 	}
