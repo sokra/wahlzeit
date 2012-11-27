@@ -22,10 +22,6 @@ package org.wahlzeit.services;
 
 
 /**
- * A manager for Context objects (user (web) sessions, agent threads, etc.)
- * Clients can look up the context by thread.
- * 
- * @author dirkriehle
  *
  */
 public class ContextProviderImpl implements ContextProvider {
