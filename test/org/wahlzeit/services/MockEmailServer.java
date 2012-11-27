@@ -18,10 +18,9 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-package org.wahlzeit.handlers;
+package org.wahlzeit.services;
 
-import junit.framework.*;
-import org.wahlzeit.services.*;
+import junit.framework.Assert;
 
 
 /**
@@ -41,17 +40,34 @@ public class MockEmailServer extends AbstractEmailServer {
 	protected String emailSubject;
 	protected String emailBody;
 	
+	protected Boolean wasCalled = false;
+	
 	/**
 	 * 
 	 */
-	public MockEmailServer(EmailAddress from, EmailAddress to, EmailAddress bcc, String subject, String body) {
+	public MockEmailServer() {
 		super();
-
+	}
+	
+	/**
+	 * 
+	 */
+	public void expect(EmailAddress from, EmailAddress to, EmailAddress bcc, String subject, String body) {
 		fromEA = from;
 		toEA = to;
 		bccEA = bcc;
 		emailSubject = subject;
 		emailBody = body;
+		
+		wasCalled = false;
+	}
+	
+	/**
+	 * 
+	 */
+	public void assertCalled() {
+		if(!wasCalled)
+			Assert.fail("MockEmailServer.sendEmail was not called");
 	}
 	
 	/**
@@ -59,9 +75,14 @@ public class MockEmailServer extends AbstractEmailServer {
 	 */
 	@Override
 	public synchronized void sendEmail(EmailAddress from, EmailAddress to, EmailAddress bcc, String subject, String body) {
+		if(fromEA == null)
+			Assert.fail("MockEmailServer.sendEmail was not expected to be called");
+		if(wasCalled)
+			Assert.fail("MockEmailServer.sendEmail was already called");
 		if (!fromEA.isEqual(from) || !toEA.isEqual(to) || !bccEA.isEqual(bcc) || !emailSubject.equals(subject) || !emailBody.equals(body)) {
 			Assert.fail("unexpected parameters passed to MockEmailServer.sendEmail");
 		}
+		wasCalled = true;
 	}
 	
 }

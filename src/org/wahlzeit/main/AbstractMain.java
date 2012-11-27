@@ -25,8 +25,8 @@ import java.util.Set;
 import javax.inject.Inject;
 
 import org.wahlzeit.model.Saveable;
+import org.wahlzeit.services.AbstractSession;
 import org.wahlzeit.services.ContextProvider;
-import org.wahlzeit.services.Session;
 import org.wahlzeit.services.SysConfig;
 import org.wahlzeit.services.SysLog;
 import org.wahlzeit.services.SysSession;
@@ -111,7 +111,7 @@ public abstract class AbstractMain implements Main {
 	 * 
 	 */
 	protected void startUp() throws Exception {
-		Session ctx = sysSessionFactory.create("system");
+		AbstractSession ctx = sysSessionFactory.create("system");
 		contextProvider.set(ctx);
 		for(Lifecycle obj: lifecycleObjects)
 			obj.startUp();

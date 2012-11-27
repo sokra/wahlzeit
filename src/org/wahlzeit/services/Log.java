@@ -26,6 +26,7 @@ import java.sql.Statement;
 import java.text.DateFormat;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 
 /**
  * Simple logging class; should be replaced with log4j or the like.
@@ -40,10 +41,10 @@ public class Log {
 	 */
 	protected final DateFormat dateFormatter;
 	
-	protected final ContextProvider contextProvider;
+	protected final Provider<Session> contextProvider;
 	
 	@Inject
-	public Log(ContextProvider contextProvider, DateFormat dateFormatter) {
+	public Log(Provider<Session> contextProvider, DateFormat dateFormatter) {
 		this.contextProvider = contextProvider;
 		this.dateFormatter = dateFormatter;
 	}

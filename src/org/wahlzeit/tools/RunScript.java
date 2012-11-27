@@ -25,14 +25,15 @@ import java.sql.Statement;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Provider;
 
 import org.wahlzeit.main.AbstractMain;
 import org.wahlzeit.main.Main;
 import org.wahlzeit.main.MainModule;
 import org.wahlzeit.services.ConfigDir;
-import org.wahlzeit.services.ContextProvider;
 import org.wahlzeit.services.DatabaseConnection;
 import org.wahlzeit.services.FileUtil;
+import org.wahlzeit.services.Session;
 import org.wahlzeit.services.SysConfig;
 import org.wahlzeit.services.SysLog;
 
@@ -99,7 +100,7 @@ public class RunScript extends MainModule {
 	static class RunScriptMain extends AbstractMain {
 		
 		@Inject
-		protected ContextProvider contextProvider;
+		protected Provider<Session> contextProvider;
 		
 		@Inject
 		protected SysConfig sysConfig;

@@ -1,0 +1,149 @@
+/*
+ * Copyright (c) 2006-2009 by Dirk Riehle, http://dirkriehle.com
+ *
+ * This file is part of the Wahlzeit photo rating application.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public
+ * License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
+ */
+
+package org.wahlzeit.services;
+
+import javax.inject.Inject;
+
+
+/**
+ * A Context object maintains a DatabaseConnection and helps track processing time.
+ * Typically, there is one for each working thread, be it a system thread or a web session.
+ * 
+ * @author dirkriehle
+ *
+ */
+public class AbstractSession implements Session {
+
+	@Inject
+	protected DatabaseConnectionPool pool;
+
+	@Inject
+	protected SysLog sysLog;
+	
+	/**
+	 * Session state
+	 */
+	protected String name = null;
+
+	/**
+	 * Database stuff
+	 */
+	protected DatabaseConnection dbConnection = null;
+	
+	/**
+	 * processing time for requests
+	 */
+	protected long processingTime = 0;
+	
+	/**
+	 * 
+	 */
+	protected void initialize(String ctxName) {
+		name = ctxName;
+	}
+	
+	/**
+	 * 
+	 */
+	protected void finalize() throws Throwable {
+		try {
+			dropDatabaseConnection();
+		} finally {
+			super.finalize();
+		}
+	}
+	
+	/**
+	 * 
+	 */
+	@Override
+	public String getName() {
+		return name;
+	}
+	
+	/**
+	 * 
+	 */
+	@Override
+	public boolean hasDatabaseConnection() {
+		return dbConnection != null;
+	}
+	
+	/**
+	 * 
+	 */
+	@Override
+	public DatabaseConnection getDatabaseConnection() {
+		if (dbConnection == null) {
+			try {
+				dbConnection = pool.getInstance();
+			} catch (Throwable t) {
+				sysLog.logThrowable(t);
+			}
+		}
+		
+		return dbConnection;
+	}
+	
+	/**
+	 * 
+	 */
+	@Override
+	public void dropDatabaseConnection() {
+		if (dbConnection != null) {
+			pool.dropInstance(dbConnection);
+			dbConnection = null;
+		}
+	}
+	
+	/**
+	 * 
+	 */
+	@Override
+	public String getClientName() {
+		return "system";
+	}
+	
+	/**
+	 * 
+	 */
+	@Override
+	public void resetProcessingTime() {
+		processingTime = 0;
+	}
+	
+	/**
+	 * 
+	 */
+	@Override
+	public void addProcessingTime(long time) {
+		processingTime += time;
+	}
+	
+	/**
+	 * 
+	 */
+	@Override
+	public long getProcessingTime() {
+		return processingTime;
+	}
+	
+}

@@ -23,9 +23,10 @@ package org.wahlzeit.model;
 import java.text.DateFormat;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 
-import org.wahlzeit.services.ContextProvider;
 import org.wahlzeit.services.Log;
+import org.wahlzeit.services.Session;
 
 /**
  * Logging class for logging user-level messages.
@@ -37,7 +38,7 @@ import org.wahlzeit.services.Log;
 public class UserLog extends Log {
 
 	@Inject
-	public UserLog(ContextProvider contextProvider, DateFormat dateFormatter) {
+	public UserLog(Provider<Session> contextProvider, DateFormat dateFormatter) {
 		super(contextProvider, dateFormatter);
 	}
 

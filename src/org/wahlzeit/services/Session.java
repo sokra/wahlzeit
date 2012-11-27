@@ -1,141 +1,45 @@
-/*
- * Copyright (c) 2006-2009 by Dirk Riehle, http://dirkriehle.com
- *
- * This file is part of the Wahlzeit photo rating application.
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public
- * License along with this program. If not, see
- * <http://www.gnu.org/licenses/>.
- */
-
 package org.wahlzeit.services;
 
-import javax.inject.Inject;
-
-
-/**
- * A Context object maintains a DatabaseConnection and helps track processing time.
- * Typically, there is one for each working thread, be it a system thread or a web session.
- * 
- * @author dirkriehle
- *
- */
-public class Session {
-
-	@Inject
-	protected DatabaseConnectionPool pool;
-
-	@Inject
-	protected SysLog sysLog;
-	
-	/**
-	 * Session state
-	 */
-	protected String name = null;
+public interface Session {
 
 	/**
-	 * Database stuff
+	 * 
 	 */
-	protected DatabaseConnection dbConnection = null;
-	
-	/**
-	 * processing time for requests
-	 */
-	protected long processingTime = 0;
-	
+	String getName();
+
 	/**
 	 * 
 	 */
-	protected void initialize(String ctxName) {
-		name = ctxName;
-	}
-	
+	boolean hasDatabaseConnection();
+
 	/**
 	 * 
 	 */
-	protected void finalize() throws Throwable {
-		try {
-			dropDatabaseConnection();
-		} finally {
-			super.finalize();
-		}
-	}
-	
+	DatabaseConnection getDatabaseConnection();
+
 	/**
 	 * 
 	 */
-	public String getName() {
-		return name;
-	}
-	
+	void dropDatabaseConnection();
+
 	/**
 	 * 
 	 */
-	public boolean hasDatabaseConnection() {
-		return dbConnection != null;
-	}
-	
+	String getClientName();
+
 	/**
 	 * 
 	 */
-	public DatabaseConnection getDatabaseConnection() {
-		if (dbConnection == null) {
-			try {
-				dbConnection = pool.getInstance();
-			} catch (Throwable t) {
-				sysLog.logThrowable(t);
-			}
-		}
-		
-		return dbConnection;
-	}
-	
+	void resetProcessingTime();
+
 	/**
 	 * 
 	 */
-	public void dropDatabaseConnection() {
-		if (dbConnection != null) {
-			pool.dropInstance(dbConnection);
-			dbConnection = null;
-		}
-	}
-	
+	void addProcessingTime(long time);
+
 	/**
 	 * 
 	 */
-	public String getClientName() {
-		return "system";
-	}
-	
-	/**
-	 * 
-	 */
-	public void resetProcessingTime() {
-		processingTime = 0;
-	}
-	
-	/**
-	 * 
-	 */
-	public void addProcessingTime(long time) {
-		processingTime += time;
-	}
-	
-	/**
-	 * 
-	 */
-	public long getProcessingTime() {
-		return processingTime;
-	}
-	
+	long getProcessingTime();
+
 }

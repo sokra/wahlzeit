@@ -30,19 +30,21 @@ public class ModelModule extends AbstractModule {
 	
 	@Override
 	protected void configure() {
-		bind(PhotoCaseManager.class).in(Scopes.SINGLETON);
-		bind(PhotoManager.class).in(Scopes.SINGLETON);
-		bind(UserManager.class).in(Scopes.SINGLETON);
-		bind(PhotoFactory.class).in(Scopes.SINGLETON);
+		bind(PhotoCaseManager.class).to(PhotoCaseManagerImpl.class).in(Scopes.SINGLETON);
+		bind(PhotoManager.class).to(PhotoManagerImpl.class).in(Scopes.SINGLETON);
+		bind(UserManager.class).to(UserManagerImpl.class).in(Scopes.SINGLETON);
+		bind(PhotoFactory.class).to(PhotoFactoryImpl.class).in(Scopes.SINGLETON);
+
+		bind(UserSession.Factory.class).to(UserSessionImpl.Factory.class);
 		
 		Multibinder<Lifecycle> lifecycleBinder = Multibinder.newSetBinder(binder(), Lifecycle.class);
-		lifecycleBinder.addBinding().to(PhotoCaseManager.class);
+		lifecycleBinder.addBinding().to(PhotoCaseManagerImpl.class);
 		lifecycleBinder.addBinding().to(GlobalsPersistance.class);
 
 		Multibinder<Saveable> saveableBinder = Multibinder.newSetBinder(binder(), Saveable.class);
-		saveableBinder.addBinding().to(PhotoCaseManager.class);
-		saveableBinder.addBinding().to(PhotoManager.class);
-		saveableBinder.addBinding().to(UserManager.class);
+		saveableBinder.addBinding().to(PhotoCaseManagerImpl.class);
+		saveableBinder.addBinding().to(PhotoManagerImpl.class);
+		saveableBinder.addBinding().to(UserManagerImpl.class);
 		saveableBinder.addBinding().to(GlobalsPersistance.class);
 	}
 

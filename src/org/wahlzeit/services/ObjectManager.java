@@ -27,6 +27,7 @@ import java.util.Collection;
 import java.util.Iterator;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 
 /**
  * An ObjectManager creates/reads/updates/deletes Persistent (objects) from a (relational) Database.
@@ -39,10 +40,10 @@ import javax.inject.Inject;
 public abstract class ObjectManager {
 	
 	protected final SysLog sysLog;
-	protected final ContextProvider contextProvider;
+	protected final Provider<Session> contextProvider;
 	
 	@Inject
-	public ObjectManager(SysLog sysLog, ContextProvider contextProvider) {
+	public ObjectManager(SysLog sysLog, Provider<Session> contextProvider) {
 		this.sysLog = sysLog;
 		this.contextProvider = contextProvider;
 	}

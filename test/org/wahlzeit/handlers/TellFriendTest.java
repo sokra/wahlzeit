@@ -20,12 +20,27 @@
 
 package org.wahlzeit.handlers;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
-import org.wahlzeit.services.*;
-import org.wahlzeit.webparts.*;
+import junit.framework.TestCase;
 
-import junit.framework.*;
+import org.wahlzeit.TestsModule;
+import org.wahlzeit.model.EnglishModelConfig;
+import org.wahlzeit.model.ModelConfig;
+import org.wahlzeit.model.UserSession;
+import org.wahlzeit.services.EmailAddress;
+import org.wahlzeit.services.EmailServer;
+import org.wahlzeit.services.MockEmailServer;
+import org.wahlzeit.services.MockUserSession;
+import org.wahlzeit.webparts.WebPart;
+
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.Scopes;
+import com.google.inject.util.Modules;
 
 /**
  * Acceptance tests for the TellFriend feature.
@@ -33,14 +48,13 @@ import junit.framework.*;
  * @author dirkriehle
  *
  */
-public class TellFriendTest extends HandlerTestCase {
+public class TellFriendTest extends TestCase {
 	
 	/**
 	 * 
 	 */
 	public static void main(String[] args) {
-		Test test = new HandlerTestSetup(new HandlerTestSuite(TellFriendTest.class));
-		junit.textui.TestRunner.run(test);
+		junit.textui.TestRunner.run(TellFriendTest.class);
 	}
 
 	/**
@@ -53,18 +67,23 @@ public class TellFriendTest extends HandlerTestCase {
 	/**
 	 * 
 	 */
-	public void setUp() {
-		handler = WebPartHandlerManager.getWebFormHandler(PartUtil.TELL_FRIEND_FORM_NAME);
-	}
-	
-	/**
-	 * 
-	 */
 	public void testTellFriendMakeWebPart() {
+		Injector injector = Guice.createInjector(Modules.override(new TestsModule()).with(new AbstractModule() {
+			
+			@Override
+			protected void configure() {
+				bind(UserSession.class).to(MockUserSession.class);
+				bind(ModelConfig.class).to(EnglishModelConfig.class);
+			}
+
+		}));
+		
+		TellFriendFormHandler handler = injector.getInstance(TellFriendFormHandler.class);
+		UserSession session = injector.getInstance(UserSession.class);
+		
 		WebPart part = handler.makeWebPart(session);
 		// no failure is good behavior
 		
-		AbstractEmailServer.setInstance(new NullEmailServer()); // no emails please
 		EmailAddress to = EmailAddress.getFromString("engel@himmel.de");
 		Map<String, String> args = new HashMap<String, String>();
 		args.put(TellFriendFormHandler.EMAIL_TO, to.asString());
@@ -72,31 +91,47 @@ public class TellFriendTest extends HandlerTestCase {
 		handler.handlePost(session, args);
 		
 		part = handler.makeWebPart(session);
-		assertEquals(part.getValue(TellFriendFormHandler.EMAIL_TO), to.asString());
-		assertEquals(part.getValue(TellFriendFormHandler.EMAIL_SUBJECT), "Oh well...");
+		assertEquals(to.asString(), part.getValue(TellFriendFormHandler.EMAIL_TO));
+		assertEquals("Oh well...", part.getValue(TellFriendFormHandler.EMAIL_SUBJECT));
 	}
 
 	/**
 	 * 
 	 */
 	public void testTellFriendPost() {
+		Injector injector = Guice.createInjector(Modules.override(new TestsModule()).with(new AbstractModule() {
+			
+			@Override
+			protected void configure() {
+				bind(UserSession.class).to(MockUserSession.class);
+				bind(ModelConfig.class).to(EnglishModelConfig.class);
+				bind(MockEmailServer.class).in(Scopes.SINGLETON);
+				bind(EmailServer.class).to(MockEmailServer.class);
+			}
+
+		}));
+		
+		TellFriendFormHandler handler = injector.getInstance(TellFriendFormHandler.class);
+		UserSession session = injector.getInstance(UserSession.class);
+		MockEmailServer mockServer = injector.getInstance(MockEmailServer.class);
+
 		EmailAddress from = EmailAddress.getFromString("info@wahlzeit.org");
 		EmailAddress to = EmailAddress.getFromString("fan@yahoo.com");
 		EmailAddress bcc = session.cfg().getAuditEmailAddress();
 		String subject = "Coolest website ever!";
 		String body = "You've got to check this out!";
-		AbstractEmailServer.setInstance(new MockEmailServer(from, to, bcc, subject, body));
 
 		Map<String, String> args = new HashMap<String, String>();
 		args.put(TellFriendFormHandler.EMAIL_FROM, from.asString());
 		args.put(TellFriendFormHandler.EMAIL_TO, to.asString());
 		args.put(TellFriendFormHandler.EMAIL_SUBJECT, subject);
 		args.put(TellFriendFormHandler.EMAIL_BODY, body);
-
-		handler.handlePost(session, args);
 		
-		AbstractEmailServer.setInstance(new MockEmailServer(from, to, bcc, subject, body));
-		handler.handlePost(session, Collections.EMPTY_MAP); // will fail if email is sent		
-	}	
+		mockServer.expect(from, to, bcc, subject, body);
+		handler.handlePost(session, args);
+		mockServer.assertCalled();
+		
+		handler.handlePost(session, Collections.<String, Object>emptyMap()); // will fail if email is sent
+	}
 
 }

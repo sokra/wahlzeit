@@ -25,6 +25,7 @@ import java.text.DateFormat;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Provider;
 
 /**
  * Logging class for logging system-level messages.
@@ -41,7 +42,7 @@ public class SysLog extends Log {
 	protected final boolean isInProductionFlag;
 	
 	@Inject
-	public SysLog(ContextProvider contextProvider, DateFormat dateFormatter, @Named("production") boolean isInProductionFlag) {
+	public SysLog(Provider<Session> contextProvider, DateFormat dateFormatter, @Named("production") boolean isInProductionFlag) {
 		super(contextProvider, dateFormatter);
 		this.isInProductionFlag = isInProductionFlag;
 		initialize();

@@ -18,29 +18,49 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-package org.wahlzeit.handlers;
-
-import org.wahlzeit.services.EmailAddress;
-import org.wahlzeit.services.EmailServer;
+package org.wahlzeit.services;
 
 
 /**
- * The NullEmailServer does nothing.
+ * The NullSession does nothing.
  * 
- * @author dirkriehle
- *
  */
-public class NullEmailServer implements EmailServer {
+public class NullSession implements Session {
 
 	@Override
-	public void sendEmail(EmailAddress from, EmailAddress to, String subject,
-			String body) {
-		// Do nothing
+	public String getName() {
+		return "null session";
 	}
 
 	@Override
-	public void sendEmail(EmailAddress from, EmailAddress to, EmailAddress bcc,
-			String subject, String body) {
-		// Do nothing
+	public boolean hasDatabaseConnection() {
+		return false;
+	}
+
+	@Override
+	public DatabaseConnection getDatabaseConnection() {
+		return null;
+	}
+
+	@Override
+	public void dropDatabaseConnection() {
+	}
+
+	@Override
+	public String getClientName() {
+		return null;
+	}
+
+	@Override
+	public void resetProcessingTime() {
+	}
+
+	@Override
+	public void addProcessingTime(long time) {
+	}
+
+	@Override
+	public long getProcessingTime() {
+		return -1;
 	}
 }

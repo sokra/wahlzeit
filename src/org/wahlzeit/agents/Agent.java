@@ -22,8 +22,8 @@ package org.wahlzeit.agents;
 
 import javax.inject.Inject;
 
+import org.wahlzeit.services.AbstractSession;
 import org.wahlzeit.services.ContextProvider;
-import org.wahlzeit.services.Session;
 import org.wahlzeit.services.SysLog;
 import org.wahlzeit.services.SysSession;
 
@@ -95,7 +95,7 @@ public abstract class Agent implements Runnable {
 	 */
 	public void run() {
 		synchronized(Agent.class) {
-			Session ctx = sysSessionFactory.create("agent" + id++);
+			AbstractSession ctx = sysSessionFactory.create("agent" + id++);
 			contextProvider.set(ctx);
 		}
 

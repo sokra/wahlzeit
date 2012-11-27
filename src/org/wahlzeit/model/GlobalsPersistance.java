@@ -26,10 +26,11 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 
 import org.wahlzeit.main.AbstractServlet;
-import org.wahlzeit.services.ContextProvider;
 import org.wahlzeit.services.DatabaseConnection;
+import org.wahlzeit.services.Session;
 import org.wahlzeit.services.SysLog;
 import org.wahlzeit.utils.Lifecycle;
 
@@ -39,7 +40,7 @@ public class GlobalsPersistance implements Lifecycle, Saveable {
 	protected SysLog sysLog;
 	
 	@Inject
-	protected ContextProvider contextProvider;
+	protected Provider<Session> contextProvider;
 	
 	/**
 	 * 

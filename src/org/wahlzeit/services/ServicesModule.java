@@ -47,7 +47,8 @@ public class ServicesModule extends AbstractModule {
 		bind(SysConfig.class).in(Scopes.SINGLETON);
 		bind(SysLog.class).in(Scopes.SINGLETON);
 		bind(DatabaseConnectionPool.class).in(Scopes.SINGLETON);
-		bind(ContextProvider.class).in(Scopes.SINGLETON);
+		bind(org.wahlzeit.services.Session.class).toProvider(ContextProvider.class);
+		bind(ContextProvider.class).to(ContextProviderImpl.class).in(Scopes.SINGLETON);
 		if(production) {
 			bind(EmailServer.class).to(SmtpEmailServer.class).in(Scopes.SINGLETON);
 			Properties properties = new Properties();

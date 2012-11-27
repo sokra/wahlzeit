@@ -17,16 +17,30 @@
  * License along with this program. If not, see
  * <http://www.gnu.org/licenses/>.
  */
-package org.wahlzeit.handlers;
 
-import junit.framework.*;
-import org.wahlzeit.model.*;
+package org.wahlzeit.services;
 
-public interface HandlerTest extends Test {
+import org.wahlzeit.services.EmailAddress;
+import org.wahlzeit.services.EmailServer;
 
-	/**
-	 * 
-	 */
-	public void setUserSession(UserSession mySession);
 
+/**
+ * The NullEmailServer does nothing.
+ * 
+ * @author dirkriehle
+ *
+ */
+public class NullEmailServer implements EmailServer {
+
+	@Override
+	public void sendEmail(EmailAddress from, EmailAddress to, String subject,
+			String body) {
+		// Do nothing
+	}
+
+	@Override
+	public void sendEmail(EmailAddress from, EmailAddress to, EmailAddress bcc,
+			String subject, String body) {
+		// Do nothing
+	}
 }

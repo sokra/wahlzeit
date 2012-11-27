@@ -18,49 +18,29 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-package org.wahlzeit.handlers;
+package org.wahlzeit.services;
 
-import java.util.Enumeration;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 
 import org.wahlzeit.model.UserSession;
 
-import junit.framework.*;
+import com.google.inject.AbstractModule;
+import com.google.inject.Scopes;
+import com.google.inject.name.Names;
 
-public class HandlerTestSuite extends TestSuite implements HandlerTest {
+public class TestsServicesModule extends AbstractModule {
 	
-	/**
-	 * 
-	 */
-	public HandlerTestSuite() {
-		super();
-	}
+	@Override
+	protected void configure() {
+		bind(EmailServer.class).to(NullEmailServer.class).in(Scopes.SINGLETON);
+		bind(Session.class).to(NullSession.class);
+		bind(UserSession.class).to(NullUserSession.class);
+		
+		bind(DateFormat.class).toInstance(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss SSS"));
 
-	/**
-	 * 
-	 */
-	public HandlerTestSuite(Class testClass) {
-		super(testClass);
-	}
-
-	/**
-	 * Adds the tests from the given class to the suite
-	 */
-	public void addTestSuite(Class testClass) {
-		addTest(new HandlerTestSuite(testClass));
-	}
-
-	/**
-	 * 
-	 */
-	public void setUserSession(UserSession mySession) {
-		Enumeration myTests = tests();
-		while(myTests.hasMoreElements()) {
-			Test next = (Test) myTests.nextElement();
-			if (next instanceof HandlerTest) {
-				HandlerTest test = (HandlerTest) next;
-				test.setUserSession(mySession);				
-			}
-		}			
+		bind(String.class).annotatedWith(Names.named("host")).toInstance("localhost");
+		bind(String.class).annotatedWith(Names.named("port")).toInstance("8585");
 	}
 
 }

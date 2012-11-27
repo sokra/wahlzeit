@@ -18,32 +18,42 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-package org.wahlzeit.handlers;
+package org.wahlzeit.services;
 
-import org.wahlzeit.model.*;
 
-import junit.framework.*;
-
-public class HandlerTestCase extends TestCase implements HandlerTest {
+/**
+ * A manager for Context objects (user (web) sessions, agent threads, etc.)
+ * Clients can look up the context by thread.
+ * 
+ * @author dirkriehle
+ *
+ */
+public class ContextProviderImpl implements ContextProvider {
 	
 	/**
 	 * 
 	 */
-	protected UserSession session;
-	protected WebFormHandler handler;
+	protected ThreadLocal<Session> contexts = new ThreadLocal<Session>();
 	
-	/**
-	 * 
-	 */
-	public HandlerTestCase(String name) {
-		super(name);
+	@Override
+	public Session get() {
+		return contexts.get();
 	}
 	
 	/**
 	 * 
 	 */
-	public void setUserSession(UserSession mySession) {
-		session = mySession;
+	@Override
+	public void set(Session ctx) {
+		contexts.set(ctx);
 	}
-
+	
+	/**
+	 * 
+	 */
+	@Override
+	public void drop() {
+		set(null);
+	}
+	
 }

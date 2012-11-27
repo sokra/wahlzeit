@@ -18,35 +18,16 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-package org.wahlzeit.services;
+package org.wahlzeit.model;
 
-import javax.inject.Inject;
+import com.google.inject.AbstractModule;
+import com.google.inject.Scopes;
 
-import com.google.inject.Injector;
-
-/**
- * A SysSession is a context for system threads i.e. not user sessions.
- * 
- * @author dirkriehle
- *
- */
-public class SysSession extends AbstractSession {
+public class TestsModelModule extends AbstractModule {
 	
-	/**
-	 * 
-	 */
-	protected SysSession() {}
-	
-	public static class Factory {
-		
-		@Inject
-		protected Injector injector;
-		
-		public SysSession create(String ctxName) {
-			SysSession session = injector.getInstance(SysSession.class);
-			session.initialize(ctxName);
-			return session;
-		}
+	@Override
+	protected void configure() {
+		bind(PhotoManager.class).to(NullPhotoManager.class).in(Scopes.SINGLETON);
 	}
 
 }

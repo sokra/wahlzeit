@@ -35,6 +35,7 @@ import javax.servlet.http.HttpSession;
 
 import org.wahlzeit.model.LanguageConfigs;
 import org.wahlzeit.model.UserSession;
+import org.wahlzeit.model.UserSessionImpl;
 import org.wahlzeit.services.ContextProvider;
 import org.wahlzeit.services.Language;
 import org.wahlzeit.services.Session;
@@ -148,7 +149,7 @@ public abstract class AbstractServlet extends HttpServlet {
 	 */
 	protected UserSession ensureWebContext(HttpServletRequest request) {
 		HttpSession httpSession = request.getSession();
-		UserSession result = (UserSession) httpSession.getAttribute("context");
+		UserSession result = (UserSessionImpl) httpSession.getAttribute("context");
 		if (result == null) {
 			try {
 				String ctxName = "ctx" + getNextSessionId();
