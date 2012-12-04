@@ -73,21 +73,31 @@ public class PhotoId {
 	 * 
 	 */
 	public static synchronized void setValue(int id) {
+		assert id > 0;
+		
 		value = id;
 		ids = new PhotoId[value + BUFFER_SIZE_INCREMENT];
 		ids[0] = NULL_ID;
+		
+		assert ids[0].isNullId(); 
+		assertStaticInvariant();
 	}
 	
 	/**
 	 * 
 	 */
 	public static synchronized int getNextValue() {
+		int oldValue = getValue();
+		
 		value += 1;
 		if (value >= ids.length) {
 			PhotoId[] nids = new PhotoId[value + BUFFER_SIZE_INCREMENT];
 			System.arraycopy(ids, 0, nids, 0, value);
 			ids = nids;
 		}
+		
+		assert getValue() == oldValue + 1;
+		assertStaticInvariant();
 		return value;
 	}
 
@@ -99,6 +109,7 @@ public class PhotoId {
 			return NULL_ID;
 		}
 		
+		// FIXME: http://en.wikipedia.org/wiki/Double-checked_locking
 		PhotoId result = ids[id];
 		if (result == null) {
 			synchronized(ids) {
@@ -109,6 +120,8 @@ public class PhotoId {
 				}
 			}
 		}
+		
+		assertStaticInvariant();
 		return result;
 	}
 	
@@ -140,8 +153,8 @@ public class PhotoId {
 	/**
 	 * 
 	 */
-	protected int intValue = 0;
-	protected String stringValue = null;
+	protected final int intValue;
+	protected final String stringValue;
 
 	/**
 	 * 
@@ -149,8 +162,10 @@ public class PhotoId {
 	protected PhotoId(int myValue) {
 		intValue = myValue;
 		stringValue = getFromInt(myValue);
+		
+		assertInvariant();
 	}
-	
+
 	/**
 	 * 
 	 */
@@ -244,6 +259,18 @@ public class PhotoId {
 		}
 
 		return result;
+	}
+	
+	private void assertInvariant() {
+		assert intValue >= 0 && intValue < getValue(); 
+		assert stringValue == getFromInt(intValue);
+		assert intValue == getFromString(stringValue);
+	}
+	
+	private static void assertStaticInvariant() {
+		assert ids != null;
+		assert value >= 0;
+		assert ids.length >= value;
 	}
 	
 }

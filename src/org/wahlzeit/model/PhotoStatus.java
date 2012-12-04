@@ -53,7 +53,7 @@ public enum PhotoStatus implements EnumValue {
 	/**
 	 * All possible states of PhotoStatus
 	 */
-	private static PhotoStatus[] allValues = {
+	private final static PhotoStatus[] allValues = {
 		VISIBLE, INVISIBLE, FLAGGED, FLAGGED2,
 		MODERATED, MODERATED2, MODERATED3, MODERATED4,
 		DELETED, DELETED2, DELETED3, DELETED4,
@@ -74,7 +74,7 @@ public enum PhotoStatus implements EnumValue {
 	/**
 	 * 
 	 */
-	private static String[] valueNames = {
+	private final static String[] valueNames = {
 		"visible", "invisible", "flagged", "flagged",
 		"moderated", "moderated", "moderated", "moderated",
 		"deleted", "deleted", "deleted", "deleted",
@@ -94,18 +94,31 @@ public enum PhotoStatus implements EnumValue {
 		throw new IllegalArgumentException("invalid PhotoStatus string: " + myStatus);
 	}
 	
+	private static void assertValidValue(int value) {
+		assert value >= 0;
+		assert value < allValues.length;
+	}
+	
+	private void assertInvariant() {
+		assertValidValue(value);
+	}
+	
 	/**
 	 * 
 	 */
-	private int value = 0;
+	private final int value;
 	
 	/**
 	 * 
 	 */
 	private PhotoStatus(int myValue) {
+		assertValidValue(myValue);
+		
 		value = myValue;
+		
+		assertInvariant();
 	}
-	
+
 	/**
 	 * 
 	 */
@@ -117,6 +130,8 @@ public enum PhotoStatus implements EnumValue {
 	 * 
 	 */
 	public String asString() {
+		assertInvariant();
+		
 		return valueNames[value];
 	}
 	
@@ -138,6 +153,8 @@ public enum PhotoStatus implements EnumValue {
 	 * 
 	 */
 	public boolean isDisplayable() {
+		assertInvariant();
+		
 		return !isInvisible() && !isFlagged() && !isModerated() && !isDeleted();
 	}
 	
@@ -145,56 +162,88 @@ public enum PhotoStatus implements EnumValue {
 	 * 
 	 */
 	public boolean isInvisible() {
+		assertInvariant();
+		
 		return (value & (1 << INVISIBLE_BIT)) != 0;
 	}
 	
 	/**
 	 * 
 	 */
-	public PhotoStatus asInvisible(boolean yes) {
-		return yes ? flag(INVISIBLE_BIT) : unflag(INVISIBLE_BIT);
+	public PhotoStatus asInvisible(boolean flag) {
+		assertInvariant();
+		
+		PhotoStatus returnValue = flag ? flag(INVISIBLE_BIT) : unflag(INVISIBLE_BIT);
+		
+		assert returnValue.isInvisible() == flag;
+		returnValue.assertInvariant();
+		return returnValue;
 	}
 	
 	/**
 	 * 
 	 */
 	public boolean isFlagged() {
+		assertInvariant();
+		
 		return (value & (1 << FLAGGED_BIT)) != 0;
 	}
 	
 	/**
 	 * 
 	 */
-	public PhotoStatus asFlagged(boolean yes) {
-		return yes ? flag(FLAGGED_BIT) : unflag(FLAGGED_BIT);
+	public PhotoStatus asFlagged(boolean flag) {
+		assertInvariant();
+		
+		PhotoStatus returnValue = flag ? flag(FLAGGED_BIT) : unflag(FLAGGED_BIT);
+		
+		assert returnValue.isFlagged() == flag;
+		returnValue.assertInvariant();
+		return returnValue;
 	}
 	
 	/**
 	 * 
 	 */
 	public boolean isModerated() {
+		assertInvariant();
+		
 		return (value & (1 << MODERATED_BIT)) != 0;
 	}
 	
 	/**
 	 * 
 	 */
-	public PhotoStatus asModerated(boolean yes) {
-		return yes ? flag(MODERATED_BIT) : unflag(MODERATED_BIT);
+	public PhotoStatus asModerated(boolean flag) {
+		assertInvariant();
+		
+		PhotoStatus returnValue = flag ? flag(MODERATED_BIT) : unflag(MODERATED_BIT);
+
+		assert returnValue.isModerated() == flag;
+		returnValue.assertInvariant();
+		return returnValue;
 	}
 	
 	/**
 	 * 
 	 */
 	public boolean isDeleted() {
+		assertInvariant();
+		
 		return (value & (1 << DELETED_BIT)) != 0;
 	}
 	
 	/**
 	 * 
 	 */
-	public PhotoStatus asDeleted(boolean yes) {
-		return yes ? flag(DELETED_BIT) : unflag(DELETED_BIT);
+	public PhotoStatus asDeleted(boolean flag) {
+		assertInvariant();
+		
+		PhotoStatus returnValue = flag ? flag(DELETED_BIT) : unflag(DELETED_BIT);
+
+		assert returnValue.isDeleted() == flag;
+		returnValue.assertInvariant();
+		return returnValue;
 	}
 	
 	/**

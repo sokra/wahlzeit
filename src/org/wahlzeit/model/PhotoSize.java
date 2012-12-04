@@ -45,7 +45,7 @@ public enum PhotoSize implements EnumValue {
 	/**
 	 * All possible states of PhotoSize
 	 */
-	private static PhotoSize[] allValues = {
+	private final static PhotoSize[] allValues = {
 		THUMB, EXTRA_SMALL, SMALL, MEDIUM, LARGE, EXTRA_LARGE
 	};
 	
@@ -86,7 +86,7 @@ public enum PhotoSize implements EnumValue {
 	/**
 	 * 
 	 */
-	private static String[] valueNames = {
+	private final static String[] valueNames = {
 		"thumb", "extra-small", "small", "medium", "large", "extra-large"
 	};
 	
@@ -104,11 +104,11 @@ public enum PhotoSize implements EnumValue {
 	}
 	
 	/**
-	 * 
+	 * final is a invariant, which is checked by the compiler
 	 */
-	private int value = 0;
-	private int maxPhotoWidth;
-	private int maxPhotoHeight;
+	private final int value;
+	private final int maxPhotoWidth;
+	private final int maxPhotoHeight;
 	
 	/**
 	 * 
@@ -186,6 +186,8 @@ public enum PhotoSize implements EnumValue {
 	 * 
 	 */
 	public boolean isWiderAndHigher(int cw, int ch) {
+		assert ch > 0 && cw > 0;
+		
 		return (cw < maxPhotoWidth) && (ch < maxPhotoHeight);
 	}
 	
@@ -193,6 +195,8 @@ public enum PhotoSize implements EnumValue {
 	 * 
 	 */
 	public int calcAdjustedWidth(int cw, int ch) {
+		assert ch > 0 && cw > 0;
+		
 		if ((cw * maxPhotoHeight) > (ch * maxPhotoWidth)) {
 			return maxPhotoWidth;
 		} else {
@@ -204,6 +208,8 @@ public enum PhotoSize implements EnumValue {
 	 * 
 	 */
 	public int calcAdjustedHeight(int cw, int ch) {
+		assert ch > 0 && cw > 0;
+		
 		if ((cw * maxPhotoHeight) > (ch * maxPhotoWidth)) {
 			return ch * maxPhotoWidth / cw;
 		} else {

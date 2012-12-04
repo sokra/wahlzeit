@@ -113,6 +113,9 @@ public class Photo extends DataObject {
 	public Photo() {
 		id = PhotoId.getNextId();
 		incWriteCount();
+		
+		assert isDirty();
+		assertInvariant();
 	}
 	
 	/**
@@ -120,9 +123,14 @@ public class Photo extends DataObject {
 	 * @methodtype constructor
 	 */
 	public Photo(PhotoId myId) {
+		assert myId != null && !myId.isNullId();
+		
 		id = myId;
 		
 		incWriteCount();
+		
+		assert isDirty(); 
+		assertInvariant();
 	}
 	
 	/**
@@ -130,7 +138,11 @@ public class Photo extends DataObject {
 	 * @methodtype constructor
 	 */
 	public Photo(ResultSet rset) throws SQLException {
+		assert rset != null && !rset.isClosed();
+		
 		readFrom(rset);
+		
+		assert !isDirty(); 
 	}
 
 	/**
@@ -145,6 +157,8 @@ public class Photo extends DataObject {
 	 * 
 	 */
 	public void readFrom(ResultSet rset) throws SQLException {
+		assert rset != null && !rset.isClosed();
+		
 		id = PhotoId.getId(rset.getInt("id"));
 
 		ownerId = rset.getInt("owner_id");
@@ -167,12 +181,16 @@ public class Photo extends DataObject {
 		creationTime = rset.getLong("creation_time");
 
 		maxPhotoSize = PhotoSize.getFromWidthHeight(width, height);
+
+		assertInvariant();
 	}
 	
 	/**
 	 * 
 	 */
 	public void writeOn(ResultSet rset) throws SQLException {
+		assert rset != null && !rset.isClosed();
+		
 		rset.updateInt("id", id.asInt());
 		rset.updateInt("owner_id", ownerId);
 		rset.updateString("owner_name", ownerName);
@@ -187,13 +205,20 @@ public class Photo extends DataObject {
 		rset.updateInt("praise_sum", praiseSum);
 		rset.updateInt("no_votes", noVotes);
 		rset.updateLong("creation_time", creationTime);		
+
+		assertInvariant();
 	}
 
 	/**
 	 * 
 	 */
 	public void writeId(PreparedStatement stmt, int pos) throws SQLException {
+		assert stmt != null && !stmt.isClosed();
+		assert pos >= 1;
+		
 		stmt.setInt(pos, id.asInt());
+		
+		assertInvariant();
 	}
 	
 	/**
@@ -217,8 +242,14 @@ public class Photo extends DataObject {
 	 * @methodtype set
 	 */
 	public void setOwnerId(int newId) {
+		assert newId >= 0;
+		
 		ownerId = newId;
 		incWriteCount();
+		
+		assert isDirty();
+		assert getOwnerId() == newId;
+		assertInvariant();
 	}
 	
 	/**
@@ -236,6 +267,10 @@ public class Photo extends DataObject {
 	public void setOwnerName(String newName) {
 		ownerName = newName;
 		incWriteCount();
+		
+		assert isDirty();
+		assert getOwnerName() == newName;
+		assertInvariant();
 	}
 	
 	/**
@@ -269,6 +304,10 @@ public class Photo extends DataObject {
 	public void setOwnerNotifyAboutPraise(boolean newNotifyAboutPraise) {
 		ownerNotifyAboutPraise = newNotifyAboutPraise;
 		incWriteCount();
+		
+		assert isDirty();
+		assert getOwnerNotifyAboutPraise() == newNotifyAboutPraise;
+		assertInvariant();
 	}
 
 	/**
@@ -286,6 +325,10 @@ public class Photo extends DataObject {
 	public void setOwnerEmailAddress(EmailAddress newEmailAddress) {
 		ownerEmailAddress = newEmailAddress;
 		incWriteCount();
+		
+		assert isDirty();
+		assert getOwnerEmailAddress() == newEmailAddress;
+		assertInvariant();
 	}
 
 	/**
@@ -299,8 +342,14 @@ public class Photo extends DataObject {
 	 * 
 	 */
 	public void setOwnerLanguage(Language newLanguage) {
+		assert newLanguage != null;
+		
 		ownerLanguage = newLanguage;
 		incWriteCount();
+		
+		assert isDirty();
+		assert getOwnerLanguage() == newLanguage;
+		assertInvariant();
 	}
 
 	/**
@@ -318,6 +367,10 @@ public class Photo extends DataObject {
 	public void setOwnerHomePage(URL newHomePage) {
 		ownerHomePage = newHomePage;
 		incWriteCount();
+		
+		assert isDirty();
+		assert getOwnerHomePage() == newHomePage;
+		assertInvariant();
 	}
 	
 	/**
@@ -379,6 +432,12 @@ public class Photo extends DataObject {
 		maxPhotoSize = PhotoSize.getFromWidthHeight(width, height);
 
 		incWriteCount();
+		
+		assert isDirty();
+		assert getMaxPhotoSize() != null;
+		assert getWidth() == newWidth;
+		assert getHeight() == newHeight;
+		assertInvariant();
 	}
 	
 	/**
@@ -418,9 +477,17 @@ public class Photo extends DataObject {
 	 * 
 	 */
 	public void addToPraise(int value) {
+		assert value >= 0;
+		double oldPraise = getPraise();
+		int oldNoVotes = noVotes;
+		
 		praiseSum += value;
 		noVotes += 1;
 		incWriteCount();
+		
+		assert isDirty();
+		assert getPraise() == (oldPraise * oldNoVotes + value) / (oldNoVotes + 1); 
+		assertInvariant();
 	}
 	
 	/**
@@ -444,8 +511,14 @@ public class Photo extends DataObject {
 	 * @methodtype set
 	 */
 	public void setStatus(PhotoStatus newStatus) {
+		assert newStatus != null;
+		
 		status = newStatus;
 		incWriteCount();
+		
+		assert isDirty();
+		assert getStatus() == newStatus;
+		assertInvariant();
 	}
 	
 	/**
@@ -469,8 +542,14 @@ public class Photo extends DataObject {
 	 * @methodtype set
 	 */
 	public void setTags(Tags newTags) {
+		assert tags != null;
+		
 		tags = newTags;
 		incWriteCount();
+		
+		assert isDirty();
+		assert getTags().equals(newTags);
+		assertInvariant();
 	}
 	
 	/**
@@ -481,4 +560,12 @@ public class Photo extends DataObject {
 		return creationTime;
 	}
 	
+	/**
+	 * 
+	 */
+	protected void assertInvariant() {
+		assert id != null;
+		assert praiseSum > 10;
+		assert noVotes > 0;
+	}
 }
