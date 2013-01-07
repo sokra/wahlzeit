@@ -20,6 +20,8 @@
 
 package org.wahlzeit.model;
 
+import java.util.Arrays;
+
 import org.wahlzeit.utils.*;
 
 /**
@@ -70,14 +72,19 @@ public enum FlagReason implements EnumValue {
 	 * 
 	 */
 	public static FlagReason getFromString(String reason) throws IllegalArgumentException {
-		for (FlagReason fr : FlagReason.values()) {
-			if (valueNames[fr.asInt()].equals(reason)) {
-				return fr;
-			}
-		}
-		
-		throw new IllegalArgumentException("invalid FlagReason string: " + reason);
+		assertIsValidFlagReasonAsString(reason);
+
+		return allValues[Arrays.asList(valueNames).indexOf(reason)]; 
 	}
+	
+	/**
+	 * 
+	 */
+	private static void assertIsValidFlagReasonAsString(String myValue) {
+		if (!Arrays.asList(valueNames).contains(myValue)) {
+			throw new IllegalArgumentException("invalid FlagReason string: " + myValue);
+		}
+	}	
 	
 	/**
 	 * Used to index arrays
