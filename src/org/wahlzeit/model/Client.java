@@ -28,8 +28,11 @@ import java.util.Collection;
 import java.util.Iterator;
 
 import org.wahlzeit.services.EmailAddress;
-import org.wahlzeit.services.Persistent;
 import org.wahlzeit.services.SysLog;
+import org.wahlzeit.services.persistence.AbstractPersistent;
+import org.wahlzeit.services.persistence.EmailAddressPersistor;
+import org.wahlzeit.services.persistence.Persist;
+import org.wahlzeit.services.persistence.Persistent;
 import org.wahlzeit.utils.StringUtil;
 
 
@@ -50,6 +53,7 @@ public class Client extends AbstractPersistent {
 	/**
 	 * 
 	 */
+	@Persist(persistor=EmailAddressPersistor.class)
 	protected EmailAddress emailAddress = EmailAddress.EMPTY;
 
 	/**
@@ -156,7 +160,6 @@ public class Client extends AbstractPersistent {
 	@Override
 	public void readFrom(ResultSet rset) throws SQLException {
 		super.readFrom(rset);
-		emailAddress = EmailAddress.getFromString(rset.getString("email_address"));
 		Collection<String> roleNames = StringUtil.split(rset.getString("roles"), " ");
 		roles.clear();
 		for(String roleName: roleNames) {
@@ -182,7 +185,6 @@ public class Client extends AbstractPersistent {
 		for(ClientRole role: roles)
 			roleNames.add(ClientRoleHelper.getRoleName(role));
 		rset.updateString("roles", StringUtil.join(roleNames, " "));
-		rset.updateString("email_address", (emailAddress == null) ? "" : emailAddress.asString());
 		for(ClientRole role: roles)
 			if(role instanceof Persistent)
 				((Persistent)role).writeOn(rset);
@@ -190,7 +192,6 @@ public class Client extends AbstractPersistent {
 	
 	@Override
 	public void writeId(PreparedStatement stmt, int pos) throws SQLException {
-		super.writeId(stmt, pos);
 		for(ClientRole role: roles)
 			if(role instanceof Persistent)
 				((Persistent)role).writeId(stmt, pos);

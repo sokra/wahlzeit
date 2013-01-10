@@ -18,29 +18,42 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-package org.wahlzeit.services;
+package org.wahlzeit.services.persistence;
 
-import org.wahlzeit.services.persistence.AbstractPersistent;
+import java.sql.*;
 
 /**
- * A simple abstract implementation of Persistent with write count and dirty bit.
- * Also defines (but does not use) the field "ID" for subclass use.
+ * A Persistent object is one that can be read from and written to a RDMBS.
+ * Also, it has a write count, which serves as a dirty flag.
  * 
  * @author dirkriehle
  *
  */
-public abstract class DataObject extends AbstractPersistent {
-	
-	/**
-	 * Not used in the class but needed by broad array of subclasses
-	 */
-	public static final String ID = "id";
+public interface Persistent {
 	
 	/**
 	 * 
 	 */
-	public final void touch() {
-		incWriteCount();
-	}
-
+	public boolean isDirty();
+	
+	/**
+	 * 
+	 */
+	public void resetWriteCount();
+	
+	/**
+	 * 
+	 */
+	public void readFrom(ResultSet rset) throws SQLException;
+	
+	/**
+	 * 
+	 */
+	public void writeOn(ResultSet rset) throws SQLException;
+	
+	/**
+	 * 
+	 */
+	public void writeId(PreparedStatement stmt, int pos) throws SQLException;
+	
 }

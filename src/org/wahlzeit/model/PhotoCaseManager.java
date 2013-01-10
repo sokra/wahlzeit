@@ -83,11 +83,11 @@ public class PhotoCaseManager extends ObjectManager {
 	 * 
 	 * @methodtype get
 	 */
-	public PhotoCase getPhotoCase(int id) {
+	public PhotoCase getPhotoCase(CaseId id) {
 		PhotoCase result = openPhotoCases.get(id);
 		if (result == null) {
 			try {
-				result = (PhotoCase) readObject(getReadingStatement("SELECT * FROM cases WHERE id = ?"), id);
+				result = (PhotoCase) readObject(getReadingStatement("SELECT * FROM cases WHERE id = ?"), id.asInt());
 			} catch (SQLException sex) {
 				SysLog.logThrowable(sex);
 			}

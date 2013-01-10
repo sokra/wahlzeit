@@ -26,6 +26,7 @@ import java.util.*;
 
 import org.wahlzeit.main.*;
 import org.wahlzeit.services.*;
+import org.wahlzeit.services.persistence.Persistent;
 
 /**
  * A photo manager provides access to and manages photos.

@@ -18,29 +18,25 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-package org.wahlzeit.services;
+package org.wahlzeit.services.persistence;
 
-import org.wahlzeit.services.persistence.AbstractPersistent;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
-/**
- * A simple abstract implementation of Persistent with write count and dirty bit.
- * Also defines (but does not use) the field "ID" for subclass use.
- * 
- * @author dirkriehle
- *
- */
-public abstract class DataObject extends AbstractPersistent {
-	
-	/**
-	 * Not used in the class but needed by broad array of subclasses
-	 */
-	public static final String ID = "id";
-	
-	/**
-	 * 
-	 */
-	public final void touch() {
-		incWriteCount();
+import org.wahlzeit.model.Photo;
+import org.wahlzeit.model.PhotoId;
+import org.wahlzeit.model.PhotoManager;
+
+public class PhotoPersistor implements Persistor<Object, Photo> {
+	@Override
+	public Photo readFrom(Object context, ResultSet rset, String column)
+			throws SQLException {
+		return PhotoManager.getPhoto(PhotoId.getId(rset.getInt(column)));
 	}
-
+	
+	@Override
+	public void writeOn(Object context, ResultSet rset, String column,
+			Photo value) throws SQLException {
+		rset.updateInt(column, (value == null) ? 0 : value.getId().asInt());
+	}
 }

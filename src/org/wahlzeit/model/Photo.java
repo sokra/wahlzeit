@@ -20,11 +20,21 @@
 
 package org.wahlzeit.model;
 
-import java.sql.*;
-import java.net.*;
+import java.net.URL;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
-import org.wahlzeit.services.*;
-import org.wahlzeit.utils.*;
+import org.wahlzeit.services.DataObject;
+import org.wahlzeit.services.EmailAddress;
+import org.wahlzeit.services.Language;
+import org.wahlzeit.services.persistence.EmailAddressPersistor;
+import org.wahlzeit.services.persistence.EnumValuePersistor;
+import org.wahlzeit.services.persistence.Persist;
+import org.wahlzeit.services.persistence.PhotoIdPersistor;
+import org.wahlzeit.services.persistence.TagsPersistor;
+import org.wahlzeit.services.persistence.UrlPersistor;
+import org.wahlzeit.utils.StringUtil;
 
 /**
  * A photo represents a user-provided (uploaded) photo.
@@ -63,49 +73,49 @@ public class Photo extends DataObject {
 	/**
 	 * 
 	 */
-	protected PhotoId id = null;
+	@Persist(persistor=PhotoIdPersistor.class) protected PhotoId id = null;
 	
 	/**
 	 * 
 	 */
-	protected int ownerId = 0;
-	protected String ownerName;
+	@Persist protected int ownerId = 0;
+	@Persist protected String ownerName;
 
 	/**
 	 * 
 	 */
-	protected boolean ownerNotifyAboutPraise = false;
-	protected EmailAddress ownerEmailAddress = EmailAddress.EMPTY;
-	protected Language ownerLanguage = Language.ENGLISH;
-	protected URL ownerHomePage;
+	@Persist protected boolean ownerNotifyAboutPraise = false;
+	@Persist(persistor=EmailAddressPersistor.class) protected EmailAddress ownerEmailAddress = EmailAddress.EMPTY;
+	@Persist(persistor=EnumValuePersistor.class) protected Language ownerLanguage = Language.ENGLISH;
+	@Persist(persistor=UrlPersistor.class) protected URL ownerHomePage;
 	
 	/**
 	 * 
 	 */
-	protected int width;
-	protected int height;
+	@Persist protected int width;
+	@Persist protected int height;
 	protected PhotoSize maxPhotoSize = PhotoSize.MEDIUM; // derived
 	
 	/**
 	 * 
 	 */
-	protected Tags tags = Tags.EMPTY_TAGS;
+	@Persist(persistor=TagsPersistor.class) protected Tags tags = Tags.EMPTY_TAGS;
 
 	/**
 	 * 
 	 */
-	protected PhotoStatus status = PhotoStatus.VISIBLE;
+	@Persist(persistor=EnumValuePersistor.class) protected PhotoStatus status = PhotoStatus.VISIBLE;
 	
 	/**
 	 * 
 	 */
-	protected int praiseSum = 10;
-	protected int noVotes = 1;
+	@Persist protected int praiseSum = 10;
+	@Persist protected int noVotes = 1;
 	
 	/**
 	 * 
 	 */
-	protected long creationTime = System.currentTimeMillis();
+	@Persist protected long creationTime = System.currentTimeMillis();
 	
 	/**
 	 * 
@@ -145,48 +155,8 @@ public class Photo extends DataObject {
 	 * 
 	 */
 	public void readFrom(ResultSet rset) throws SQLException {
-		id = PhotoId.getId(rset.getInt("id"));
-
-		ownerId = rset.getInt("owner_id");
-		ownerName = rset.getString("owner_name");
-		
-		ownerNotifyAboutPraise = rset.getBoolean("owner_notify_about_praise");
-		ownerEmailAddress = EmailAddress.getFromString(rset.getString("owner_email_address"));
-		ownerLanguage = Language.getFromInt(rset.getInt("owner_language"));
-		ownerHomePage = StringUtil.asUrl(rset.getString("owner_home_page"));
-
-		width = rset.getInt("width");
-		height = rset.getInt("height");
-
-		tags = new Tags(rset.getString("tags"));
-
-		status = PhotoStatus.getFromInt(rset.getInt("status"));
-		praiseSum = rset.getInt("praise_sum");
-		noVotes = rset.getInt("no_votes");
-
-		creationTime = rset.getLong("creation_time");
-
+		super.readFrom(rset);
 		maxPhotoSize = PhotoSize.getFromWidthHeight(width, height);
-	}
-	
-	/**
-	 * 
-	 */
-	public void writeOn(ResultSet rset) throws SQLException {
-		rset.updateInt("id", id.asInt());
-		rset.updateInt("owner_id", ownerId);
-		rset.updateString("owner_name", ownerName);
-		rset.updateBoolean("owner_notify_about_praise", ownerNotifyAboutPraise);
-		rset.updateString("owner_email_address", ownerEmailAddress.asString());
-		rset.updateInt("owner_language", ownerLanguage.asInt());
-		rset.updateString("owner_home_page", ownerHomePage.toString());
-		rset.updateInt("width", width);
-		rset.updateInt("height", height);
-		rset.updateString("tags", tags.asString());
-		rset.updateInt("status", status.asInt());
-		rset.updateInt("praise_sum", praiseSum);
-		rset.updateInt("no_votes", noVotes);
-		rset.updateLong("creation_time", creationTime);		
 	}
 
 	/**

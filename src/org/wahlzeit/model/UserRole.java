@@ -25,6 +25,11 @@ import java.net.*;
 import java.sql.*;
 
 import org.wahlzeit.services.*;
+import org.wahlzeit.services.persistence.AbstractPersistent;
+import org.wahlzeit.services.persistence.EnumValuePersistor;
+import org.wahlzeit.services.persistence.HomePagePersistor;
+import org.wahlzeit.services.persistence.Persist;
+import org.wahlzeit.services.persistence.PhotoPersistor;
 import org.wahlzeit.utils.*;
 
 /**
@@ -88,31 +93,32 @@ public class UserRole extends AbstractPersistent implements ClientRole {
 	/**
 	 * 
 	 */
-	protected int id;
-	protected String name;
-	protected String nameAsTag;
-	protected String password;
+	@Persist protected int id;
+	@Persist protected String name;
+	@Persist protected String nameAsTag;
+	@Persist protected String password;
 	
 	/**
 	 * 
 	 */
-	protected Language language = Language.ENGLISH;
-	protected boolean notifyAboutPraise = true;
-	protected URL homePage = StringUtil.asUrl(SysConfig.getSiteUrlAsString());
-	protected Gender gender = Gender.UNDEFINED;
-	protected UserStatus status = UserStatus.CREATED;
-	protected long confirmationCode = 0; // 0 means doesn't need confirmation
+	@Persist(persistor=EnumValuePersistor.class) protected Language language = Language.ENGLISH;
+	@Persist protected boolean notifyAboutPraise = true;
+	@Persist(persistor=HomePagePersistor.class) protected URL homePage = StringUtil.asUrl(SysConfig.getSiteUrlAsString());
+	@Persist(persistor=EnumValuePersistor.class) protected Gender gender = Gender.UNDEFINED;
+	@Persist(persistor=EnumValuePersistor.class) protected UserStatus status = UserStatus.CREATED;
+	@Persist protected long confirmationCode = 0; // 0 means doesn't need confirmation
 
 	/**
 	 * 
 	 */
+	@Persist(persistor=PhotoPersistor.class, column="photo")
 	protected Photo userPhoto = null;
 	protected Set<Photo> photos = new HashSet<Photo>();
 	
 	/**
 	 * 
 	 */
-	protected long creationTime = System.currentTimeMillis();
+	@Persist protected long creationTime = System.currentTimeMillis();
 	
 	/**
 	 * 
@@ -186,39 +192,10 @@ public class UserRole extends AbstractPersistent implements ClientRole {
 	 * @methodtype command
 	 */
 	public void readFrom(ResultSet rset) throws SQLException {
-		id = rset.getInt("id");
-		name = rset.getString("name");
-		nameAsTag = rset.getString("name_as_tag");
-		password = rset.getString("password");
-		language = Language.getFromInt(rset.getInt("language"));
-		notifyAboutPraise = rset.getBoolean("notify_about_praise");
-		homePage = StringUtil.asUrlOrDefault(rset.getString("home_page"), getDefaultHomePage());
-		gender = Gender.getFromInt(rset.getInt("gender"));
-		status = UserStatus.getFromInt(rset.getInt("status"));
-		confirmationCode = rset.getLong("confirmation_code");
+		super.readFrom(rset);
 		photos = PhotoManager.getInstance().findPhotosByOwner(name);
-		userPhoto = PhotoManager.getPhoto(PhotoId.getId(rset.getInt("photo")));
-		creationTime = rset.getLong("creation_time");
 	}
 	
-	/**
-	 * 
-	 */
-	public void writeOn(ResultSet rset) throws SQLException {
-		rset.updateInt("id", id);
-		rset.updateString("name", name);
-		rset.updateString("name_as_tag", nameAsTag);
-		rset.updateString("password", password);
-		rset.updateInt("language", language.asInt());
-		rset.updateBoolean("notify_about_praise", notifyAboutPraise);
-		rset.updateString("home_page", homePage.toString());
-		rset.updateInt("gender", gender.asInt());
-		rset.updateInt("status", status.asInt());
-		rset.updateLong("confirmation_code", confirmationCode);
-		rset.updateInt("photo", (userPhoto == null) ? 0 : userPhoto.getId().asInt());
-		rset.updateLong("creation_time", creationTime);
-	}
-
 	/**
 	 * 
 	 */

@@ -18,42 +18,25 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-package org.wahlzeit.services;
+package org.wahlzeit.services.persistence;
 
-import java.sql.*;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
-/**
- * A Persistent object is one that can be read from and written to a RDMBS.
- * Also, it has a write count, which serves as a dirty flag.
- * 
- * @author dirkriehle
- *
- */
-public interface Persistent {
-	
-	/**
-	 * 
-	 */
-	public boolean isDirty();
-	
-	/**
-	 * 
-	 */
-	public void resetWriteCount();
-	
-	/**
-	 * 
-	 */
-	public void readFrom(ResultSet rset) throws SQLException;
-	
-	/**
-	 * 
-	 */
-	public void writeOn(ResultSet rset) throws SQLException;
-	
-	/**
-	 * 
-	 */
-	public void writeId(PreparedStatement stmt, int pos) throws SQLException;
-	
+import org.wahlzeit.model.Tags;
+
+public class TagsPersistor implements Persistor<Object, Tags> {
+
+	@Override
+	public Tags readFrom(Object context, ResultSet rset, String column)
+			throws SQLException {
+		return new Tags(rset.getString(column));
+	}
+
+	@Override
+	public void writeOn(Object context, ResultSet rset, String column, Tags value)
+			throws SQLException {
+		rset.updateString(column, value.asString());
+	}
+
 }

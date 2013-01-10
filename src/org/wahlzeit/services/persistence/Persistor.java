@@ -18,29 +18,15 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-package org.wahlzeit.services;
+package org.wahlzeit.services.persistence;
 
-import org.wahlzeit.services.persistence.AbstractPersistent;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
-/**
- * A simple abstract implementation of Persistent with write count and dirty bit.
- * Also defines (but does not use) the field "ID" for subclass use.
- * 
- * @author dirkriehle
- *
- */
-public abstract class DataObject extends AbstractPersistent {
+public interface Persistor<C, T> {
 	
-	/**
-	 * Not used in the class but needed by broad array of subclasses
-	 */
-	public static final String ID = "id";
+	public T readFrom(C context, ResultSet rset, String column) throws SQLException;
 	
-	/**
-	 * 
-	 */
-	public final void touch() {
-		incWriteCount();
-	}
+	public void writeOn(C context, ResultSet rset, String column, T value) throws SQLException;
 
 }

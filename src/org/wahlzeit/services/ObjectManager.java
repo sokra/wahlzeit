@@ -23,6 +23,8 @@ package org.wahlzeit.services;
 import java.sql.*;
 import java.util.*;
 
+import org.wahlzeit.services.persistence.Persistent;
+
 /**
  * An ObjectManager creates/reads/updates/deletes Persistent (objects) from a (relational) Database.
  * It is an abstract superclass that relies an inheritance interface and the Persistent interface.

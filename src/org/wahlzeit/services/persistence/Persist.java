@@ -18,29 +18,19 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-package org.wahlzeit.services;
+package org.wahlzeit.services.persistence;
 
-import org.wahlzeit.services.persistence.AbstractPersistent;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-/**
- * A simple abstract implementation of Persistent with write count and dirty bit.
- * Also defines (but does not use) the field "ID" for subclass use.
- * 
- * @author dirkriehle
- *
- */
-public abstract class DataObject extends AbstractPersistent {
-	
-	/**
-	 * Not used in the class but needed by broad array of subclasses
-	 */
-	public static final String ID = "id";
-	
-	/**
-	 * 
-	 */
-	public final void touch() {
-		incWriteCount();
-	}
 
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.FIELD)
+public @interface Persist {
+	String column() default "";
+	Class<? extends Persistor<?, ?>> persistor() default DefaultPersistor.class;
 }

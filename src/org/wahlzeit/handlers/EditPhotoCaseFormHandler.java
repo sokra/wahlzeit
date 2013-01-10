@@ -22,6 +22,7 @@ package org.wahlzeit.handlers;
 
 import java.util.*;
 
+import org.wahlzeit.model.CaseId;
 import org.wahlzeit.model.ModeratorRole;
 import org.wahlzeit.model.Photo;
 import org.wahlzeit.model.PhotoCase;
@@ -84,7 +85,7 @@ public class EditPhotoCaseFormHandler extends AbstractWebFormHandler {
 		String id = ctx.getAndSaveAsString(args, PhotoCase.ID);
 		PhotoCaseManager pcm = PhotoCaseManager.getInstance();
 		
-		PhotoCase photoCase = pcm.getPhotoCase(Integer.parseInt(id));
+		PhotoCase photoCase = pcm.getPhotoCase(new CaseId(Integer.parseInt(id)));
 		Photo photo = photoCase.getPhoto();
 		PhotoStatus status = photo.getStatus();
 		if (ctx.isFormType(args, "unflag")) {
