@@ -47,7 +47,7 @@ public class UserSession extends Session {
 	 */
 	protected ModelConfig configuration = LanguageConfigs.get(Language.ENGLISH);
 
-	protected Client client = new Guest();
+	protected Client client = new Client();
 	protected PhotoSize photoSize = PhotoSize.MEDIUM;
 	protected long confirmationCode = -1; // -1 means not set
 	protected PhotoFilter photoFilter = PhotoFactory.getInstance().createPhotoFilter();
@@ -110,8 +110,8 @@ public class UserSession extends Session {
 		String result = "anon";
 		if (!StringUtil.isNullOrEmptyString(getEmailAddressAsString())) {
 			result = getEmailAddressAsString();
-			if (client instanceof User) {
-				User user = (User) client;
+			if (client.hasRole(UserRole.class)) {
+				UserRole user = client.getRole(UserRole.class);
 				result = user.getName();
 			} 
 		}
@@ -122,11 +122,10 @@ public class UserSession extends Session {
 	 * 
 	 */
 	public String getEmailAddressAsString() {
-		String result = null;
 		if (client != null) {
-			result = client.getEmailAddress().asString();
+			return client.getEmailAddress().asString();
 		}
-		return result;
+		return null;
 	}
 	
 	/**
@@ -314,9 +313,9 @@ public class UserSession extends Session {
 	public boolean isPhotoOwner(Photo photo) {
 		boolean result = false;
 		Client client = getClient();
-		if ((photo != null) && (client instanceof User)) {
-			User user = (User) client;
-			result = photo.getOwnerName().equals(user.getName());
+		if ((photo != null) && (client.hasRole(UserRole.class))) {
+			UserRole user = client.getRole(UserRole.class);
+			result = photo.getOwnerId() == user.getId();
 		}
 		return result;
 	}

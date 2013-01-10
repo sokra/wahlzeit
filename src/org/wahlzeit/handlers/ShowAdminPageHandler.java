@@ -39,7 +39,7 @@ public class ShowAdminPageHandler extends AbstractWebPageHandler implements WebF
 	 * 
 	 */
 	public ShowAdminPageHandler() {
-		initialize(PartUtil.SHOW_ADMIN_PAGE_FILE, AccessRights.ADMINISTRATOR);
+		initialize(PartUtil.SHOW_ADMIN_PAGE_FILE, null);
 	}
 
 	/**
@@ -69,7 +69,7 @@ public class ShowAdminPageHandler extends AbstractWebPageHandler implements WebF
 		WebFormHandler handler = getFormHandler(PartUtil.NULL_FORM_NAME);
 
 		String userId = ctx.getSavedArg("userId").toString();
-		User user = UserManager.getInstance().getUserByName(userId);
+		Client user = UserManager.getInstance().getUserByName(userId);
 		if (user != null) {
 			handler = getFormHandler(PartUtil.ADMIN_USER_PROFILE_FORM_NAME);
 		}
@@ -121,7 +121,7 @@ public class ShowAdminPageHandler extends AbstractWebPageHandler implements WebF
 	 */
 	protected String performAdminUserProfileRequest(UserSession ctx, Map args) {
 		String userId = ctx.getAndSaveAsString(args, "userId");
-		User user = UserManager.getInstance().getUserByName(userId);
+		Client user = UserManager.getInstance().getUserByName(userId);
 		if (user == null) {
 			ctx.setMessage(ctx.cfg().getUserNameIsUnknown());
 		}

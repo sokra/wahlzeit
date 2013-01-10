@@ -39,7 +39,7 @@ public class EmailUserNameFormHandler extends AbstractWebFormHandler {
 	 *
 	 */
 	public EmailUserNameFormHandler() {
-		initialize(PartUtil.EMAIL_USER_NAME_FORM_FILE, AccessRights.GUEST);
+		initialize(PartUtil.EMAIL_USER_NAME_FORM_FILE, null);
 	}
 
 	/**
@@ -48,14 +48,14 @@ public class EmailUserNameFormHandler extends AbstractWebFormHandler {
 	protected void doMakeWebPart(UserSession ctx, WebPart part) {
 		Map<String, Object> savedArgs = ctx.getSavedArgs();
 		part.addStringFromArgs(savedArgs, UserSession.MESSAGE);
-		part.maskAndAddStringFromArgs(savedArgs, User.EMAIL_ADDRESS);
+		part.maskAndAddStringFromArgs(savedArgs, UserRole.EMAIL_ADDRESS);
 	}
 	
 	/**
 	 * 
 	 */
 	protected String doHandlePost(UserSession ctx, Map args) {
-		String emailAddress = ctx.getAndSaveAsString(args, User.EMAIL_ADDRESS);
+		String emailAddress = ctx.getAndSaveAsString(args, UserRole.EMAIL_ADDRESS);
 		if (StringUtil.isNullOrEmptyString(emailAddress)) {
 			ctx.setMessage(ctx.cfg().getFieldIsMissing());
 			return PartUtil.EMAIL_PASSWORD_PAGE_NAME;
@@ -65,7 +65,7 @@ public class EmailUserNameFormHandler extends AbstractWebFormHandler {
 		}
 
 		UserManager userManager = UserManager.getInstance();	
-		User user = userManager.getUserByEmailAddress(emailAddress);
+		Client user = userManager.getUserByEmailAddress(emailAddress);
 		if (user == null) {
 			ctx.setMessage(ctx.cfg().getUnknownEmailAddress());
 			return PartUtil.EMAIL_PASSWORD_PAGE_NAME;
@@ -75,7 +75,7 @@ public class EmailUserNameFormHandler extends AbstractWebFormHandler {
 		
 		EmailAddress from = ctx.cfg().getModeratorEmailAddress();
 		EmailAddress to = user.getEmailAddress();
-		emailService.sendEmailIgnoreException(from, to, ctx.cfg().getAuditEmailAddress(), ctx.cfg().getSendUserNameEmailSubject(), user.getName());
+		emailService.sendEmailIgnoreException(from, to, ctx.cfg().getAuditEmailAddress(), ctx.cfg().getSendUserNameEmailSubject(), user.getRole(UserRole.class).getName());
 
 		UserLog.logPerformedAction("EmailUserName");
 

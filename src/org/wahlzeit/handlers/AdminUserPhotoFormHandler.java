@@ -36,7 +36,7 @@ public class AdminUserPhotoFormHandler extends AbstractWebFormHandler {
 	 *
 	 */
 	public AdminUserPhotoFormHandler() {
-		initialize(PartUtil.ADMIN_USER_PHOTO_FORM_FILE, AccessRights.ADMINISTRATOR);
+		initialize(PartUtil.ADMIN_USER_PHOTO_FORM_FILE, AdministratorRole.class);
 	}
 	
 	/**

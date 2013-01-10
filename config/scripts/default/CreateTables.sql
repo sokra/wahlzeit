@@ -4,7 +4,7 @@ CREATE TABLE users (
 	name_as_tag text,
 	email_address text,
 	"password" text,
-	rights integer,
+	roles text,
 	"language" integer,
 	notify_about_praise boolean,
 	home_page text,
@@ -59,6 +59,6 @@ CREATE TABLE globals (
 INSERT INTO globals (id, last_user_id, last_photo_id, last_case_id, last_session_id)
 	VALUES (0, 1, 0, 0, 0);
 
-INSERT INTO users (id, name, name_as_tag, email_address, "password", rights, status)
-	VALUES (1, 'admin', 'admin', 'root@localhost', 'admin', 4, 1);
+INSERT INTO users (id, name, name_as_tag, email_address, "password", roles, status)
+	VALUES (1, 'admin', 'admin', 'root@localhost', 'admin', 'user moderator administrator', 1);
 

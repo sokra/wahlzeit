@@ -22,7 +22,7 @@ package org.wahlzeit.handlers;
 
 import java.util.*;
 
-import org.wahlzeit.model.AccessRights;
+import org.wahlzeit.model.ModeratorRole;
 import org.wahlzeit.model.PhotoCase;
 import org.wahlzeit.model.PhotoCaseManager;
 import org.wahlzeit.model.UserSession;
@@ -44,7 +44,7 @@ public class ShowPhotoCasesPageHandler extends AbstractWebPageHandler {
 	 *
 	 */
 	public ShowPhotoCasesPageHandler() {
-		initialize(PartUtil.SHOW_PHOTO_CASES_PAGE_FILE, AccessRights.MODERATOR);
+		initialize(PartUtil.SHOW_PHOTO_CASES_PAGE_FILE, ModeratorRole.class);
 	}
 
 	/**

@@ -37,7 +37,7 @@ public class FilterPhotosFormHandler extends AbstractWebFormHandler {
 	 * 
 	 */
 	public FilterPhotosFormHandler() {
-		initialize(PartUtil.FILTER_PHOTOS_FORM_FILE, AccessRights.GUEST);
+		initialize(PartUtil.FILTER_PHOTOS_FORM_FILE, null);
 	}
 	
 	/**

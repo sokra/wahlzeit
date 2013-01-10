@@ -22,9 +22,11 @@ package org.wahlzeit.handlers;
 
 import java.util.*;
 
-import org.wahlzeit.model.AccessRights;
+import org.wahlzeit.model.AdministratorRole;
+import org.wahlzeit.model.Client;
+import org.wahlzeit.model.ModeratorRole;
 import org.wahlzeit.model.Photo;
-import org.wahlzeit.model.User;
+import org.wahlzeit.model.UserRole;
 import org.wahlzeit.model.UserSession;
 import org.wahlzeit.utils.HtmlUtil;
 import org.wahlzeit.webparts.WebPart;
@@ -42,27 +44,30 @@ public class ShowUserProfileFormHandler extends AbstractWebFormHandler {
 	 *
 	 */
 	public ShowUserProfileFormHandler() {
-		initialize(PartUtil.SHOW_USER_PROFILE_FORM_FILE, AccessRights.USER);
+		initialize(PartUtil.SHOW_USER_PROFILE_FORM_FILE, UserRole.class);
 	}
 	
 	/**
 	 * 
 	 */
 	protected void doMakeWebPart(UserSession ctx, WebPart part) {
-		User user = (User) ctx.getClient();
+		Client client = ctx.getClient();
+		UserRole user = client.getRole(UserRole.class);
 
 		Photo photo = user.getUserPhoto();
 		part.addString(Photo.THUMB, getPhotoThumb(ctx, photo));
 		
-		part.maskAndAddString(User.NAME, user.getName());
-		part.addString(User.STATUS, ctx.cfg().asValueString(user.getStatus()));
-		part.maskAndAddString(User.EMAIL_ADDRESS, user.getEmailAddress().asString());
-		part.addString(User.MEMBER_SINCE, ctx.cfg().asDateString(user.getCreationTime()));
-		part.addString(User.NOTIFY_ABOUT_PRAISE, ctx.cfg().asYesOrNoString(user.getNotifyAboutPraise()));
-		part.addString(User.HOME_PAGE, HtmlUtil.asHref(user.getHomePage().toString()));
-		part.addString(User.NO_PHOTOS, String.valueOf(user.getNoPhotos()));
-		part.addString(User.GENDER, ctx.cfg().asValueString(user.getGender()));
-		part.addString(User.LANGUAGE, ctx.cfg().asValueString(user.getLanguage()));
+		part.maskAndAddString(UserRole.NAME, user.getName());
+		part.addString(UserRole.STATUS, ctx.cfg().asValueString(user.getStatus()));
+		part.addString(ModeratorRole.ROLE, ctx.cfg().asYesOrNoString(client.hasRole(ModeratorRole.class)));
+		part.addString(AdministratorRole.ROLE, ctx.cfg().asYesOrNoString(client.hasRole(AdministratorRole.class)));
+		part.maskAndAddString(UserRole.EMAIL_ADDRESS, client.getEmailAddress().asString());
+		part.addString(UserRole.MEMBER_SINCE, ctx.cfg().asDateString(user.getCreationTime()));
+		part.addString(UserRole.NOTIFY_ABOUT_PRAISE, ctx.cfg().asYesOrNoString(user.getNotifyAboutPraise()));
+		part.addString(UserRole.HOME_PAGE, HtmlUtil.asHref(user.getHomePage().toString()));
+		part.addString(UserRole.NO_PHOTOS, String.valueOf(user.getNoPhotos()));
+		part.addString(UserRole.GENDER, ctx.cfg().asValueString(user.getGender()));
+		part.addString(UserRole.LANGUAGE, ctx.cfg().asValueString(user.getLanguage()));
 	}
 
 	/**

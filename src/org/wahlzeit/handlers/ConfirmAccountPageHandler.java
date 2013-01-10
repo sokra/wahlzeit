@@ -37,7 +37,7 @@ public class ConfirmAccountPageHandler extends AbstractWebPageHandler {
 	 *
 	 */
 	public ConfirmAccountPageHandler() {
-		initialize(PartUtil.SHOW_NOTE_PAGE_FILE, AccessRights.GUEST);
+		initialize(PartUtil.SHOW_NOTE_PAGE_FILE, null);
 	}
 	
 	/**
@@ -62,12 +62,12 @@ public class ConfirmAccountPageHandler extends AbstractWebPageHandler {
 			// NumberFormatException
 		}
 
-		if (client instanceof User) {
-			User user = (User) client;
+		if (client.hasRole(UserRole.class)) {
+			UserRole user = client.getRole(UserRole.class);
 			if (user.getConfirmationCode() == confirmationCode) {
 				user.setConfirmed();
 			} else {
-				UserManager.getInstance().emailConfirmationRequest(ctx, user);
+				UserManager.getInstance().emailConfirmationRequest(ctx, client);
 			}
 			ctx.clearConfirmationCode();
 		}
@@ -82,8 +82,8 @@ public class ConfirmAccountPageHandler extends AbstractWebPageHandler {
 		String heading, msg1, msg2 = "";
 		
 		Client client = ctx.getClient();
-		if (client instanceof User) {
-			User user = (User) client;
+		if (client.hasRole(UserRole.class)) {
+			UserRole user = client.getRole(UserRole.class);
 			if (user.isConfirmed()) {
 				heading = ctx.cfg().getThankYou();
 				msg1 = ctx.cfg().getConfirmAccountSucceeded();

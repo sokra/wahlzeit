@@ -22,7 +22,6 @@ package org.wahlzeit.handlers;
 
 import java.util.*;
 
-import org.wahlzeit.model.AccessRights;
 import org.wahlzeit.model.ModelConfig;
 import org.wahlzeit.model.LanguageConfigs;
 import org.wahlzeit.model.UserSession;
@@ -43,7 +42,7 @@ public class SetLanguagePageHandler extends AbstractWebPageHandler {
 	 * 
 	 */
 	public SetLanguagePageHandler() {
-		initialize(PartUtil.SHOW_NOTE_PAGE_FILE, AccessRights.GUEST);
+		initialize(PartUtil.SHOW_NOTE_PAGE_FILE, null);
 	}
 	
 	/**

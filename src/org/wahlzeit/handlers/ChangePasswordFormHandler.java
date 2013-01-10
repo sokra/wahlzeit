@@ -22,8 +22,7 @@ package org.wahlzeit.handlers;
 
 import java.util.*;
 
-import org.wahlzeit.model.AccessRights;
-import org.wahlzeit.model.User;
+import org.wahlzeit.model.UserRole;
 import org.wahlzeit.model.UserLog;
 import org.wahlzeit.model.UserSession;
 import org.wahlzeit.utils.StringUtil;
@@ -42,7 +41,7 @@ public class ChangePasswordFormHandler extends AbstractWebFormHandler {
 	 *
 	 */
 	public ChangePasswordFormHandler() {
-		initialize(PartUtil.CHANGE_PASSWORD_FORM_FILE, AccessRights.USER);
+		initialize(PartUtil.CHANGE_PASSWORD_FORM_FILE, UserRole.class);
 	}
 	
 	/**
@@ -52,17 +51,17 @@ public class ChangePasswordFormHandler extends AbstractWebFormHandler {
 		Map<String, Object> args = ctx.getSavedArgs();
 		part.addStringFromArgs(args, UserSession.MESSAGE);
 
-		User user = (User) ctx.getClient();
-		part.addStringFromArgsWithDefault(args, User.PASSWORD, user.getPassword());
-		part.addStringFromArgsWithDefault(args, User.PASSWORD_AGAIN, user.getPassword());
+		UserRole user = ctx.getClient().getRole(UserRole.class);
+		part.addStringFromArgsWithDefault(args, UserRole.PASSWORD, user.getPassword());
+		part.addStringFromArgsWithDefault(args, UserRole.PASSWORD_AGAIN, user.getPassword());
 	}
 
 	/**
 	 * 
 	 */
 	protected String doHandlePost(UserSession ctx, Map args) {
-		String password = ctx.getAndSaveAsString(args, User.PASSWORD);
-		String passwordAgain = ctx.getAndSaveAsString(args, User.PASSWORD_AGAIN);
+		String password = ctx.getAndSaveAsString(args, UserRole.PASSWORD);
+		String passwordAgain = ctx.getAndSaveAsString(args, UserRole.PASSWORD_AGAIN);
 		
 		if (StringUtil.isNullOrEmptyString(password)) {
 			ctx.setMessage(ctx.cfg().getFieldIsMissing());
@@ -75,7 +74,7 @@ public class ChangePasswordFormHandler extends AbstractWebFormHandler {
 			return PartUtil.SIGNUP_PAGE_NAME;
 		}
 
-		User user = (User) ctx.getClient();
+		UserRole user = ctx.getClient().getRole(UserRole.class);
 		user.setPassword(password);
 		
 		UserLog.logPerformedAction("ChangePassword");

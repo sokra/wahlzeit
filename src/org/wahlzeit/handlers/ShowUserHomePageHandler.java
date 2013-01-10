@@ -35,7 +35,7 @@ public class ShowUserHomePageHandler extends AbstractWebPageHandler {
 	 *
 	 */
 	public ShowUserHomePageHandler() {
-		initialize(PartUtil.SHOW_USER_HOME_PAGE_FILE, AccessRights.USER);
+		initialize(PartUtil.SHOW_USER_HOME_PAGE_FILE, UserRole.class);
 	}
 
 	/**
@@ -45,7 +45,7 @@ public class ShowUserHomePageHandler extends AbstractWebPageHandler {
 		Writable part = makeUserProfileForm(ctx);
 		page.addWritable("profile", part);
 		
-		User user = (User) ctx.getClient();
+		UserRole user = ctx.getClient().getRole(UserRole.class);
 		Photo[] photos = user.getPhotos();
 		boolean wasEmpty = true;
 		if (photos.length != 0) {

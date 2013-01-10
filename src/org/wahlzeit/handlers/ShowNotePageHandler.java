@@ -22,7 +22,6 @@ package org.wahlzeit.handlers;
 
 import java.util.*;
 
-import org.wahlzeit.model.AccessRights;
 import org.wahlzeit.model.UserSession;
 import org.wahlzeit.utils.StringUtil;
 import org.wahlzeit.webparts.WebPart;
@@ -40,7 +39,7 @@ public class ShowNotePageHandler extends AbstractWebPageHandler {
 	 *
 	 */
 	public ShowNotePageHandler() {
-		initialize(PartUtil.SHOW_NOTE_PAGE_FILE, AccessRights.GUEST);
+		initialize(PartUtil.SHOW_NOTE_PAGE_FILE, null);
 	}
 	
 	/**

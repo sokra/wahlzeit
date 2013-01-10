@@ -22,8 +22,8 @@ package org.wahlzeit.handlers;
 
 import java.util.*;
 
-import org.wahlzeit.model.AccessRights;
-import org.wahlzeit.model.User;
+import org.wahlzeit.model.Client;
+import org.wahlzeit.model.UserRole;
 import org.wahlzeit.model.UserLog;
 import org.wahlzeit.model.UserManager;
 import org.wahlzeit.model.UserSession;
@@ -43,7 +43,7 @@ public class LoginFormHandler extends AbstractWebFormHandler {
 	 *
 	 */
 	public LoginFormHandler() {
-		initialize(PartUtil.LOGIN_FORM_FILE, AccessRights.GUEST);
+		initialize(PartUtil.LOGIN_FORM_FILE, null);
 	}
 
 	/**
@@ -55,15 +55,15 @@ public class LoginFormHandler extends AbstractWebFormHandler {
 		
 //		part.addString(WebContext.MESSAGE, ctx.getMessage());
 
-		part.maskAndAddStringFromArgs(args, User.NAME);
+		part.maskAndAddStringFromArgs(args, UserRole.NAME);
 	}
 
 	/**
 	 * 
 	 */
 	protected String doHandlePost(UserSession ctx, Map args) {
-		String userName = ctx.getAndSaveAsString(args, User.NAME);
-		String password = ctx.getAndSaveAsString(args, User.PASSWORD);
+		String userName = ctx.getAndSaveAsString(args, UserRole.NAME);
+		String password = ctx.getAndSaveAsString(args, UserRole.PASSWORD);
 		
 		UserManager userManager = UserManager.getInstance();
 		
@@ -81,20 +81,20 @@ public class LoginFormHandler extends AbstractWebFormHandler {
 			return PartUtil.LOGIN_PAGE_NAME;
 		}
 		
-		User user = userManager.getUserByName(userName);
-		if (!user.hasPassword(password)) {
+		Client user = userManager.getUserByName(userName);
+		if (!user.getRole(UserRole.class).hasPassword(password)) {
 			ctx.setMessage(ctx.cfg().getLoginIsIncorrect());
 			return PartUtil.LOGIN_PAGE_NAME;
-		} else if (user.getStatus().isDisabled()) {
+		} else if (user.getRole(UserRole.class).getStatus().isDisabled()) {
 			ctx.setMessage(ctx.cfg().getUserIsDisabled());
 			return PartUtil.LOGIN_PAGE_NAME;
 		}
 
 		ctx.setClient(user);
-		if (!user.isConfirmed() && user.needsConfirmation()) {
+		if (!user.getRole(UserRole.class).isConfirmed() && user.getRole(UserRole.class).needsConfirmation()) {
 			if (ctx.hasConfirmationCode()) {
-				if (user.getConfirmationCode() == ctx.getConfirmationCode()) {
-					user.setConfirmed();
+				if (user.getRole(UserRole.class).getConfirmationCode() == ctx.getConfirmationCode()) {
+					user.getRole(UserRole.class).setConfirmed();
 					ctx.setTwoLineMessage(ctx.cfg().getConfirmAccountSucceeded(), ctx.cfg().getContinueWithShowUserHome());
 				} else {
 					UserManager.getInstance().emailConfirmationRequest(ctx, user);

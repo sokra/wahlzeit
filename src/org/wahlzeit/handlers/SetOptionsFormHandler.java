@@ -43,7 +43,7 @@ public class SetOptionsFormHandler extends AbstractWebFormHandler {
 	 *
 	 */
 	public SetOptionsFormHandler() {
-		initialize(PartUtil.SET_OPTIONS_FORM_FILE, AccessRights.GUEST);
+		initialize(PartUtil.SET_OPTIONS_FORM_FILE, null);
 	}
 	
 	/**

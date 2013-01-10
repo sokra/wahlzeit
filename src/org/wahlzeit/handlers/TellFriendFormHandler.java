@@ -47,7 +47,7 @@ public class TellFriendFormHandler extends AbstractWebFormHandler {
 	 *
 	 */
 	public TellFriendFormHandler() {
-		initialize(PartUtil.TELL_FRIEND_FORM_FILE, AccessRights.GUEST);
+		initialize(PartUtil.TELL_FRIEND_FORM_FILE, null);
 	}
 
 	/**

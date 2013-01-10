@@ -39,17 +39,7 @@ public interface Persistent {
 	/**
 	 * 
 	 */
-	public void incWriteCount();
-	
-	/**
-	 * 
-	 */
 	public void resetWriteCount();
-
-	/**
-	 * 
-	 */
-	public String getIdAsString();
 	
 	/**
 	 * 

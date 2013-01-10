@@ -37,7 +37,7 @@ public class EditUserPhotoFormHandler extends AbstractWebFormHandler {
 	 *
 	 */
 	public EditUserPhotoFormHandler() {
-		initialize(PartUtil.EDIT_USER_PHOTO_FORM_FILE, AccessRights.USER);
+		initialize(PartUtil.EDIT_USER_PHOTO_FORM_FILE, UserRole.class);
 	}
 	
 	/**

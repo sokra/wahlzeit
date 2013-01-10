@@ -20,7 +20,18 @@
 
 package org.wahlzeit.model;
 
-import org.wahlzeit.services.*;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+
+import org.wahlzeit.services.EmailAddress;
+import org.wahlzeit.services.Persistent;
+import org.wahlzeit.services.SysLog;
+import org.wahlzeit.utils.StringUtil;
+
 
 /**
  * A Client uses the system. It is an abstract superclass.
@@ -29,90 +40,111 @@ import org.wahlzeit.services.*;
  * @author dirkriehle
  *
  */
-public abstract class Client {
+public class Client extends AbstractPersistent {
 	
 	/**
 	 * 
 	 */
-	protected AccessRights rights = AccessRights.NONE;
+	protected Collection<ClientRole> roles = new ArrayList<ClientRole>();
 	
 	/**
 	 * 
 	 */
 	protected EmailAddress emailAddress = EmailAddress.EMPTY;
+
+	/**
+	 * 
+	 */
+	public Client() {
+		// Do nothing
+	}
 	
 	/**
 	 * 
 	 */
-	protected Client() {
-		// do nothing
+	public Client(ClientRole myRole) {
+		addRole(myRole);
 	}
-	
-	/**
-	 * @methodtype initialization
-	 */
-	protected void initialize(AccessRights myRights, EmailAddress myEmailAddress) {
-		rights = myRights;
-		setEmailAddress(myEmailAddress);
-	}
+
 
 	/**
 	 * @methodtype get
 	 */
-	public AccessRights getRights() {
-		return rights;
+	@SuppressWarnings("unchecked")
+	public <T extends ClientRole> T getRole(Class<T> roleClass) {
+		if(roleClass == null)
+			throw new IllegalArgumentException("roleClass must be set");
+		for(ClientRole role: roles)
+			if(roleClass.isInstance(role))
+				return (T) role;
+		return null;
 	}
 	
 	/**
-	 * @methodtype set
+	 *
 	 */
-	public void setRights(AccessRights newRights) {
-		rights = newRights;
+	public void addRole(ClientRole role) {
+		if(role == null)
+			throw new IllegalArgumentException("role must not be null");
+		roles.add(role);
+		role.onConnectedWithClient(this);
+	}
+	
+	/**
+	 *
+	 */
+	public void removeRole(ClientRole role) {
+		if(role == null)
+			throw new IllegalArgumentException("role must not be null");
+		roles.remove(role);
+	}
+	
+	/**
+	 *
+	 */
+	public void removeRole(Class<? extends ClientRole> roleClass) {
+		if(roleClass == null)
+			throw new IllegalArgumentException("roleClass must not be null");
+		for(Iterator<ClientRole> i = roles.iterator(); i.hasNext();) {
+			ClientRole role = i.next();
+			if(roleClass.isInstance(role))
+				i.remove();
+		}
 	}
 	
 	/**
 	 * 
 	 * @methodtype boolean-query
 	 */
-	public boolean hasRights(AccessRights otherRights) {
-		return AccessRights.hasRights(rights, otherRights);
-	}
-	
-	/**
-	 * 
-	 * @methodtype boolean-query
-	 */
-	public boolean hasGuestRights() {
-		return hasRights(AccessRights.GUEST);
+	public boolean hasRole(Class<? extends ClientRole> roleClass) {
+		if(roleClass == null)
+			throw new IllegalArgumentException("roleClass must be set");
+		for(ClientRole role: roles)
+			if(roleClass.isInstance(role))
+				return true;
+		return false;
 	}
 	
 	/**
 	 * 
 	 */
-	public boolean hasUserRights() {
-		return hasRights(AccessRights.USER);
+	public void setEmailAddress(String myEmailAddress) {
+		setEmailAddress(EmailAddress.getFromString(myEmailAddress));
 	}
 	
 	/**
 	 * 
-	 * @methodtype boolean-query
 	 */
-	public boolean hasModeratorRights
-	() {
-		return hasRights(AccessRights.MODERATOR);
+	public void setEmailAddress(EmailAddress myEmailAddress) {
+		emailAddress = myEmailAddress;
+		incWriteCount();
+		
+		for(ClientRole role: roles)
+			role.onClientChanged();
 	}
 	
 	/**
 	 * 
-	 * @methodtype boolean-query
-	 */
-	public boolean hasAdministratorRights() {
-		return hasRights(AccessRights.ADMINISTRATOR);
-	}
-	
-	/**
-	 * 
-	 * @methodtype get
 	 */
 	public EmailAddress getEmailAddress() {
 		return emailAddress;
@@ -120,10 +152,48 @@ public abstract class Client {
 	
 	/**
 	 * 
-	 * @methodtype set
 	 */
-	public void setEmailAddress(EmailAddress newEmailAddress) {
-		emailAddress = newEmailAddress;
+	@Override
+	public void readFrom(ResultSet rset) throws SQLException {
+		super.readFrom(rset);
+		emailAddress = EmailAddress.getFromString(rset.getString("email_address"));
+		Collection<String> roleNames = StringUtil.split(rset.getString("roles"), " ");
+		roles.clear();
+		for(String roleName: roleNames) {
+			ClientRole role = ClientRoleHelper.constructRoleFromName(roleName);
+			if(role == null) {
+				SysLog.logInfo("received NONE role value");
+			} else {
+				roles.add(role);
+				role.onConnectedWithClient(this);
+				if(role instanceof Persistent)
+					((Persistent)role).readFrom(rset);
+			}
+		}
 	}
 	
+	/**
+	 * 
+	 */
+	@Override
+	public void writeOn(ResultSet rset) throws SQLException {
+		super.writeOn(rset);
+		Collection<String> roleNames = new ArrayList<String>();
+		for(ClientRole role: roles)
+			roleNames.add(ClientRoleHelper.getRoleName(role));
+		rset.updateString("roles", StringUtil.join(roleNames, " "));
+		rset.updateString("email_address", (emailAddress == null) ? "" : emailAddress.asString());
+		for(ClientRole role: roles)
+			if(role instanceof Persistent)
+				((Persistent)role).writeOn(rset);
+	}
+	
+	@Override
+	public void writeId(PreparedStatement stmt, int pos) throws SQLException {
+		super.writeId(stmt, pos);
+		for(ClientRole role: roles)
+			if(role instanceof Persistent)
+				((Persistent)role).writeId(stmt, pos);
+	}
+
 }

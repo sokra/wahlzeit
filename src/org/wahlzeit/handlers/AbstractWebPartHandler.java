@@ -42,12 +42,12 @@ public abstract class AbstractWebPartHandler implements WebPartHandler {
 	/**
 	 * 
 	 */
-	protected AccessRights neededRights;
+	protected Class<? extends ClientRole> neededRights;
 	
 	/**
 	 * 
 	 */
-	protected void initialize(String myTmplName, AccessRights myRights) {
+	protected void initialize(String myTmplName, Class<? extends ClientRole> myRights) {
 		tmplName = myTmplName;
 		neededRights = myRights;
 	}
@@ -114,7 +114,7 @@ public abstract class AbstractWebPartHandler implements WebPartHandler {
 	/**
 	 * 
 	 */
-	public final AccessRights getNeededRights() {
+	public final Class<? extends ClientRole> getNeededRights() {
 		return neededRights;
 	}
 	
@@ -122,7 +122,8 @@ public abstract class AbstractWebPartHandler implements WebPartHandler {
 	 * 
 	 */
 	protected boolean hasAccessRights(UserSession ctx, Map args) {
-		return ctx.getClient().hasRights(getNeededRights());
+		Class<? extends ClientRole> role = getNeededRights();
+		return role == null || ctx.getClient().hasRole(role);
 	}
 	
 	/**
@@ -207,7 +208,7 @@ public abstract class AbstractWebPartHandler implements WebPartHandler {
 
 		String msg1 = ctx.cfg().getIllegalArgumentError();
 		String msg2 = ctx.cfg().getContinueWithShowPhoto();
-		if (ctx.getClient() instanceof User) {
+		if (ctx.getClient().hasRole(UserRole.class)) {
 			msg2 = ctx.cfg().getContinueWithShowUserHome();
 		}
 		
@@ -224,7 +225,7 @@ public abstract class AbstractWebPartHandler implements WebPartHandler {
 
 		String msg1 = ctx.cfg().getInternalProcessingError();
 		String msg2 = ctx.cfg().getContinueWithShowPhoto();
-		if (ctx.getClient() instanceof User) {
+		if (ctx.getClient().hasRole(UserRole.class)) {
 			msg2 = ctx.cfg().getContinueWithShowUserHome();
 		}
 		

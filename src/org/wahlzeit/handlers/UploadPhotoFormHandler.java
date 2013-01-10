@@ -40,7 +40,7 @@ public class UploadPhotoFormHandler extends AbstractWebFormHandler {
 	 *
 	 */
 	public UploadPhotoFormHandler() {
-		initialize(PartUtil.UPLOAD_PHOTO_FORM_FILE, AccessRights.USER);
+		initialize(PartUtil.UPLOAD_PHOTO_FORM_FILE, UserRole.class);
 	}
 	
 	/**
@@ -73,7 +73,7 @@ public class UploadPhotoFormHandler extends AbstractWebFormHandler {
 			String targetFileName = SysConfig.getBackupDirAsString() + photo.getId().asString();
 			createBackup(sourceFileName, targetFileName);
 		
-			User user = (User) ctx.getClient();
+			UserRole user = ctx.getClient().getRole(UserRole.class);
 			user.addPhoto(photo); 
 			
 			photo.setTags(new Tags(tags));

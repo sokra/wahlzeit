@@ -36,7 +36,7 @@ import org.wahlzeit.utils.*;
  * @author dirkriehle
  *
  */
-public class User extends Client implements Persistent {
+public class UserRole extends AbstractPersistent implements ClientRole {
 	
 	/**
 	 * 
@@ -52,14 +52,13 @@ public class User extends Client implements Persistent {
 	 * 
 	 */
 	public static final String STATUS = "status";
-	public static final String RIGHTS = "rights";
 	public static final String GENDER = "gender";
 	public static final String LANGUAGE = "language";
 	public static final String NOTIFY_ABOUT_PRAISE = "notifyAboutPraise";
 	public static final String HOME_PAGE = "homePage";
 	public static final String MEMBER_SINCE = "memberSince";
 	public static final String NO_PHOTOS = "noPhotos";
-		
+	
 	/**
 	 * 0 is never returned, first value is 1
 	 */
@@ -86,11 +85,6 @@ public class User extends Client implements Persistent {
 		return ++lastUserId;
 	}
 
-	/**
-	 * 
-	 */
-	protected transient int writeCount = 0;
-	
 	/**
 	 * 
 	 */
@@ -123,39 +117,37 @@ public class User extends Client implements Persistent {
 	/**
 	 * 
 	 */
-	public User(String myName, String myPassword, String myEmailAddress, long vc) {
-		this(myName, myPassword, EmailAddress.getFromString(myEmailAddress), vc);
+	protected Client client;
+	
+	/**
+	 * 
+	 */
+	public UserRole(String myName, String myPassword, long vc) {
+		initialize(myName, myPassword, vc);
 	}
 	
 	/**
 	 * 
 	 */
-	public User(String myName, String myPassword, EmailAddress myEmailAddress, long vc) {
-		initialize(AccessRights.USER, myEmailAddress, myName, myPassword, vc);
+	public UserRole(int myId) {
+		id = myId;
+
+		incWriteCount();
 	}
 	
 	/**
 	 * 
 	 */
-	public User(ResultSet rset) throws SQLException {
-		readFrom(rset);
-	}
-	
-	/**
-	 * 
-	 */
-	protected User() {
+	protected UserRole() {
 		// do nothing
 	}
 
 	/**
 	 * @methodtype initialization
 	 */
-	protected void initialize(AccessRights r, EmailAddress ea, String n, String p, long vc) {
-		super.initialize(r, ea);
-		
+	protected void initialize(String n, String p, long vc) {
 		id = getNextUserId();
-		
+
 		name = n;
 		nameAsTag = Tags.asTag(name);
 		
@@ -168,31 +160,18 @@ public class User extends Client implements Persistent {
 	}
 	
 	/**
+	 * 
+	 */
+	@Override
+	public void onConnectedWithClient(Client client) {
+		this.client = client;
+	}
+	
+	/**
 	 * @methodtype get
 	 */
 	public int getId() {
 		return id;
-	}
-	
-	/**
-	 * 
-	 */
-	public boolean isDirty() {
-		return writeCount != 0;
-	}
-	
-	/**
-	 * 
-	 */
-	public final void incWriteCount() {
-		writeCount++;
-	}
-	
-	/**
-	 * 
-	 */
-	public void resetWriteCount() {
-		writeCount = 0;
 	}
 	
 	/**
@@ -210,9 +189,7 @@ public class User extends Client implements Persistent {
 		id = rset.getInt("id");
 		name = rset.getString("name");
 		nameAsTag = rset.getString("name_as_tag");
-		emailAddress = EmailAddress.getFromString(rset.getString("email_address"));
 		password = rset.getString("password");
-		rights = AccessRights.getFromInt(rset.getInt("rights"));
 		language = Language.getFromInt(rset.getInt("language"));
 		notifyAboutPraise = rset.getBoolean("notify_about_praise");
 		homePage = StringUtil.asUrlOrDefault(rset.getString("home_page"), getDefaultHomePage());
@@ -231,9 +208,7 @@ public class User extends Client implements Persistent {
 		rset.updateInt("id", id);
 		rset.updateString("name", name);
 		rset.updateString("name_as_tag", nameAsTag);
-		rset.updateString("email_address", (emailAddress == null) ? "" : emailAddress.asString());
 		rset.updateString("password", password);
-		rset.updateInt("rights", rights.asInt());
 		rset.updateInt("language", language.asInt());
 		rset.updateBoolean("notify_about_praise", notifyAboutPraise);
 		rset.updateString("home_page", homePage.toString());
@@ -249,19 +224,6 @@ public class User extends Client implements Persistent {
 	 */
 	public void writeId(PreparedStatement stmt, int pos) throws SQLException {
 		stmt.setInt(pos, id);
-	}
-	
-	/**
-	 * 
-	 */
-	public void setEmailAddress(EmailAddress myEmailAddress) {
-		super.setEmailAddress(myEmailAddress);
-		incWriteCount();
-		
-		for (Iterator<Photo> i = photos.iterator(); i.hasNext(); ) {
-			Photo photo = i.next();
-			photo.setOwnerEmailAddress(emailAddress);
-		}
 	}
 	
 	/**
@@ -466,7 +428,7 @@ public class User extends Client implements Persistent {
 		newPhoto.setOwnerId(id);
 		newPhoto.setOwnerName(name);
 		newPhoto.setOwnerNotifyAboutPraise(notifyAboutPraise);
-		newPhoto.setOwnerEmailAddress(emailAddress);
+		newPhoto.setOwnerEmailAddress(client.emailAddress);
 		newPhoto.setOwnerLanguage(language);
 		newPhoto.setOwnerHomePage(homePage);
 	}
@@ -500,6 +462,17 @@ public class User extends Client implements Persistent {
 		Photo[] result = photos.toArray(new Photo[0]);
 		Arrays.sort(result, getPhotoByPraiseReverseComparator());
 		return result;
+	}
+	
+	/**
+	 * 
+	 */
+	@Override
+	public void onClientChanged() {
+		for (Iterator<Photo> i = photos.iterator(); i.hasNext(); ) {
+			Photo photo = i.next();
+			photo.setOwnerEmailAddress(client.getEmailAddress());
+		}
 	}
 	
 	/**

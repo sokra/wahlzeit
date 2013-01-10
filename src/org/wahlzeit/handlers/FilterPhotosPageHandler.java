@@ -40,7 +40,7 @@ public class FilterPhotosPageHandler extends AbstractWebPageHandler {
 	 *
 	 */
 	public FilterPhotosPageHandler() {
-		initialize(PartUtil.SHOW_NOTE_PAGE_FILE, AccessRights.GUEST);
+		initialize(PartUtil.SHOW_NOTE_PAGE_FILE, null);
 	}
 	
 	/**

@@ -102,11 +102,11 @@ public abstract class AbstractWebPageHandler extends AbstractWebPartHandler impl
 		Client client = ctx.getClient();
 		String menu = "";
 		
-		if (client.hasAdministratorRights()) {
+		if (client.hasRole(AdministratorRole.class)) {
 			menu = ctx.cfg().getAdministratorMenu();
-		} else if (client.hasModeratorRights()) {
+		} else if (client.hasRole(ModeratorRole.class)) {
 			menu = ctx.cfg().getModeratorMenu();
-		} else if (client.hasUserRights()) {
+		} else if (client.hasRole(UserRole.class)) {
 			menu = ctx.cfg().getUserMenu();
 		} else {
 			menu = ctx.cfg().getGuestMenu();

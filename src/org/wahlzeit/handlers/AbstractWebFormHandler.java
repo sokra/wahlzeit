@@ -37,7 +37,7 @@ public abstract class AbstractWebFormHandler extends AbstractWebPartHandler impl
 	/**
 	 * 
 	 */
-	protected void initialize(String partTmplName, AccessRights neededRights) {
+	protected void initialize(String partTmplName, Class<? extends ClientRole> neededRights) {
 		super.initialize(partTmplName, neededRights);
 	}
 	

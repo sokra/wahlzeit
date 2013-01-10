@@ -38,7 +38,7 @@ public class ShowUserPhotoFormHandler extends AbstractWebFormHandler {
 	 *
 	 */
 	public ShowUserPhotoFormHandler() {
-		initialize(PartUtil.SHOW_USER_PHOTO_FORM_FILE, AccessRights.USER);
+		initialize(PartUtil.SHOW_USER_PHOTO_FORM_FILE, UserRole.class);
 	}
 	
 	/**
@@ -82,7 +82,7 @@ public class ShowUserPhotoFormHandler extends AbstractWebFormHandler {
 		Photo photo = PhotoManager.getPhoto(id);
 
 		UserManager userManager = UserManager.getInstance();
-		User user = userManager.getUserByName(photo.getOwnerName());
+		Client user = userManager.getUserByName(photo.getOwnerName());
 		if (ctx.isFormType(args, "edit")) {
 			ctx.setPhoto(photo);
 			result = PartUtil.EDIT_USER_PHOTO_PAGE_NAME;
@@ -90,13 +90,13 @@ public class ShowUserPhotoFormHandler extends AbstractWebFormHandler {
 			ctx.setPhoto(photo);
 			result = PartUtil.TELL_FRIEND_PAGE_NAME;
 		} else if (ctx.isFormType(args, "select")) {
-			user.setUserPhoto(photo);
+			user.getRole(UserRole.class).setUserPhoto(photo);
 			userManager.saveUser(user);
 			UserLog.logPerformedAction("SelectUserPhoto");
 		} else if (ctx.isFormType(args, "delete")) {
 			photo.setStatus(photo.getStatus().asDeleted(true));
-			if (user.getUserPhoto() == photo) {
-				user.setUserPhoto(null);
+			if (user.getRole(UserRole.class).getUserPhoto() == photo) {
+				user.getRole(UserRole.class).setUserPhoto(null);
 			}
 			userManager.saveUser(user);
 			UserLog.logPerformedAction("DeleteUserPhoto");

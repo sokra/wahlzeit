@@ -37,7 +37,7 @@ public class ResetSessionPageHandler extends AbstractWebPageHandler {
 	 *
 	 */
 	public ResetSessionPageHandler() {
-		initialize(PartUtil.SHOW_NOTE_PAGE_FILE, AccessRights.GUEST);
+		initialize(PartUtil.SHOW_NOTE_PAGE_FILE, null);
 	}
 	
 	/**

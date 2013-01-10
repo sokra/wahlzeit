@@ -39,7 +39,6 @@ public class AllTests extends TestSuite {
 		suite.addTestSuite(ValueTest.class);
 		suite.addTestSuite(GenderTest.class);
 		suite.addTestSuite(PhotoFilterTest.class);
-		suite.addTestSuite(AccessRightsTest.class);
 		suite.addTestSuite(UserStatusTest.class);
 		suite.addTestSuite(FlagReasonTest.class);
 		return suite;

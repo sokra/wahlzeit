@@ -20,21 +20,24 @@
 
 package org.wahlzeit.model;
 
-import org.wahlzeit.services.*;
+
 
 /**
- * A Guest is a client that is not logged in.
+ * A Moderator is a system user with moderator privileges.
  * 
  * @author dirkriehle
  *
  */
-public class Guest extends Client {
-
-	/**
-	 * 
-	 */
-	public Guest() {
-		initialize(AccessRights.GUEST, EmailAddress.EMPTY);
+public class ModeratorRole implements ClientRole {
+	public static final String ROLE = "moderator";
+	
+	@Override
+	public void onClientChanged() {
+		// Do nothing
 	}
-
+	
+	@Override
+	public void onConnectedWithClient(Client client) {
+		// Do nothing
+	}
 }

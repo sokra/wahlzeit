@@ -25,7 +25,6 @@ import java.util.*;
 import org.wahlzeit.agents.Agent;
 import org.wahlzeit.agents.AgentManager;
 import org.wahlzeit.agents.NotifyAboutPraiseAgent;
-import org.wahlzeit.model.AccessRights;
 import org.wahlzeit.model.Photo;
 import org.wahlzeit.model.PhotoManager;
 import org.wahlzeit.model.UserLog;
@@ -46,7 +45,7 @@ public class PraisePhotoFormHandler extends AbstractWebFormHandler {
 	 * 
 	 */
 	public PraisePhotoFormHandler() {
-		initialize(PartUtil.PRAISE_PHOTO_FORM_FILE, AccessRights.GUEST);
+		initialize(PartUtil.PRAISE_PHOTO_FORM_FILE, null);
 	}
 	
 	/**

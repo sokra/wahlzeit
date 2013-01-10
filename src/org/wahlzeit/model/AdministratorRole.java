@@ -20,35 +20,25 @@
 
 package org.wahlzeit.model;
 
-import org.wahlzeit.services.*;
+
+
 
 /**
- * A Moderator is a system user with moderator privileges.
+ * An Administrator is a moderator with administration privileges.
  * 
  * @author dirkriehle
  *
  */
-public class Moderator extends User {
-
-	/**
-	 * 
-	 */
-	public Moderator(String myName, String myPassword, String myEmailAddress, long vc) {
-		this(myName, myPassword, EmailAddress.getFromString(myEmailAddress), vc);
+public class AdministratorRole implements ClientRole {
+	public static final String ROLE = "administrator"; 
+	
+	@Override
+	public void onClientChanged() {
+		// Do nothing
 	}
 	
-	/**
-	 * 
-	 */
-	public Moderator(String myName, String myPassword, EmailAddress myEmailAddress, long vc) {
-		initialize(AccessRights.MODERATOR, myEmailAddress, myName, myPassword, vc);
+	@Override
+	public void onConnectedWithClient(Client client) {
+		// Do nothing
 	}
-	
-	/**
-	 * 
-	 */
-	protected Moderator() {
-		// do nothing
-	}
-		
 }

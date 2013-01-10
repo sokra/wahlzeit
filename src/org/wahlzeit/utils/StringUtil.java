@@ -22,6 +22,8 @@ package org.wahlzeit.utils;
 
 import java.io.File;
 import java.net.*;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.regex.*;
 
 /**
@@ -251,4 +253,33 @@ public class StringUtil {
 		}
 	}
 	
+	/**
+	 * 
+	 */
+	public final static String join(Collection<String> collection, String joiner) {
+		StringBuilder sb = new StringBuilder();
+		for(String item: collection) {
+			if(sb.length() != 0)
+				sb.append(joiner);
+			sb.append(item);
+		}
+		return sb.toString();
+	}
+	
+	/**
+	 * 
+	 */
+	public final static Collection<String> split(String sequence, String splitter) {
+		int current = 0;
+		Collection<String> collection = new ArrayList<String>();
+		while(true) {
+			int index = sequence.indexOf(splitter, current);
+			if(index == -1) {
+				collection.add(sequence.substring(current));
+				return collection;
+			}
+			collection.add(sequence.substring(current, index));
+			current = index + splitter.length();
+		}
+	}
 }

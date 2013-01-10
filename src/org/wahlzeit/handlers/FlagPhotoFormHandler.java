@@ -39,7 +39,7 @@ public class FlagPhotoFormHandler extends AbstractWebFormHandler {
 	 *
 	 */
 	public FlagPhotoFormHandler() {
-		initialize(PartUtil.FLAG_PHOTO_FORM_FILE, AccessRights.GUEST);
+		initialize(PartUtil.FLAG_PHOTO_FORM_FILE, null);
 	}
 
 	/**

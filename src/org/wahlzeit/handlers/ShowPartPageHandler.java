@@ -22,7 +22,7 @@ package org.wahlzeit.handlers;
 
 import java.util.Map;
 
-import org.wahlzeit.model.AccessRights;
+import org.wahlzeit.model.ClientRole;
 import org.wahlzeit.model.UserSession;
 import org.wahlzeit.webparts.Writable;
 import org.wahlzeit.webparts.WebPart;
@@ -44,14 +44,14 @@ public class ShowPartPageHandler extends AbstractWebPageHandler {
 	/**
 	 * 
 	 */
-	public ShowPartPageHandler(AccessRights myRights, WebPartHandler myPartHandler) {
+	public ShowPartPageHandler(Class<? extends ClientRole> myRights, WebPartHandler myPartHandler) {
 		initialize(myRights, myPartHandler);
 	}
 
 	/**
 	 * 
 	 */
-	protected void initialize(AccessRights myRights, WebPartHandler myPartHandler) {
+	protected void initialize(Class<? extends ClientRole> myRights, WebPartHandler myPartHandler) {
 		super.initialize(PartUtil.SHOW_PART_PAGE_FILE, myRights);
 		partHandler = myPartHandler;
 	}

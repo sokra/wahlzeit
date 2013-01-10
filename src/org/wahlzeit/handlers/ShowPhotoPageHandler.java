@@ -38,7 +38,7 @@ public class ShowPhotoPageHandler extends AbstractWebPageHandler implements WebF
 	 * 
 	 */
 	public ShowPhotoPageHandler() {
-		initialize(PartUtil.SHOW_PHOTO_PAGE_FILE, AccessRights.GUEST);
+		initialize(PartUtil.SHOW_PHOTO_PAGE_FILE, null);
 	}
 	
 	/**
@@ -141,7 +141,7 @@ public class ShowPhotoPageHandler extends AbstractWebPageHandler implements WebF
 		}
 		
 		Client client = ctx.getClient();
-		if (!photo.isVisible() && !client.hasModeratorRights() && !ctx.isPhotoOwner(photo)) {
+		if (!photo.isVisible() && !client.hasRole(ModeratorRole.class) && !ctx.isPhotoOwner(photo)) {
 			page.addString("mainWidth", String.valueOf(pagePhotoSize.getMaxPhotoWidth()));
 			WebPart done = createWebPart(ctx, PartUtil.HIDDEN_INFO_FILE);
 			page.addWritable(Photo.IMAGE, done);
