@@ -68,6 +68,7 @@ public interface PartUtil {
 
 	public static final String HIDDEN_INFO_FILE = "infos/HiddenInfo";
 	public static final String DONE_INFO_FILE = "infos/DoneInfo";
+	public static final String ERROR_INFO_FILE = "infos/ErrorInfo";
 
 	public static final String FILTER_PHOTOS_PAGE_NAME = "filter";
 

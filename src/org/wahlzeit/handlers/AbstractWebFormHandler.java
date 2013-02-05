@@ -79,6 +79,8 @@ public abstract class AbstractWebFormHandler extends AbstractWebPartHandler impl
 		try {
 			// may throw Exception
 			return doHandlePost(ctx, args);
+		} catch (ReadWriteException e) {
+			return getReadWriteErrorPage(ctx);
 		} catch (Throwable t) {
 			SysLog.logThrowable(t);
 			return getInternalProcessingErrorPage(ctx);

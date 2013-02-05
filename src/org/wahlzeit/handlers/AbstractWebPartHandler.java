@@ -23,6 +23,7 @@ package org.wahlzeit.handlers;
 import java.util.*;
 
 import org.wahlzeit.model.*;
+import org.wahlzeit.model.PhotoManager.PhotoNotFoundException;
 import org.wahlzeit.services.*;
 import org.wahlzeit.utils.*;
 import org.wahlzeit.webparts.*;
@@ -143,7 +144,7 @@ public abstract class AbstractWebPartHandler implements WebPartHandler {
 	/**
 	 * 
 	 */
-	protected boolean isSavedPhotoVisible(UserSession ctx) {
+	protected boolean isSavedPhotoVisible(UserSession ctx) throws PhotoNotFoundException {
 		String id = ctx.getAsString(ctx.getSavedArgs(), Photo.ID);
 		Photo photo = PhotoManager.getPhoto(id);
 		return photo.isVisible();
@@ -173,6 +174,8 @@ public abstract class AbstractWebPartHandler implements WebPartHandler {
 		try {
 			// may throw Exception
 			return doHandleGet(ctx, link, args);
+		} catch (ReadWriteException e) {
+			return getReadWriteErrorPage(ctx);
 		} catch (Throwable t) {
 			SysLog.logThrowable(t);
 			return getInternalProcessingErrorPage(ctx);
@@ -227,6 +230,20 @@ public abstract class AbstractWebPartHandler implements WebPartHandler {
 		if (ctx.getClient() instanceof User) {
 			msg2 = ctx.cfg().getContinueWithShowUserHome();
 		}
+		
+		ctx.setTwoLineMessage(msg1, msg2);
+
+		return PartUtil.SHOW_NOTE_PAGE_NAME;
+	}
+
+	/**
+	 * 
+	 */
+	protected String getReadWriteErrorPage(UserSession ctx) {
+		ctx.setHeading(ctx.cfg().getInformation());
+
+		String msg1 = ctx.cfg().getInternalProcessingError();
+		String msg2 = ctx.cfg().getReadWriteError();
 		
 		ctx.setTwoLineMessage(msg1, msg2);
 

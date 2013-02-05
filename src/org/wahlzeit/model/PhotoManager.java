@@ -68,20 +68,24 @@ public class PhotoManager extends ObjectManager {
 	 * 
 	 */
 	public static final boolean hasPhoto(PhotoId id) {
-		return getPhoto(id) != null;
+		try {
+			return getPhoto(id) != null;
+		} catch (PhotoNotFoundException e) {
+			return false;
+		}
 	}
 	
 	/**
 	 * 
 	 */
-	public static final Photo getPhoto(String id) {
+	public static final Photo getPhoto(String id) throws PhotoNotFoundException {
 		return getPhoto(PhotoId.getId(id));
 	}
 	
 	/**
 	 * 
 	 */
-	public static final Photo getPhoto(PhotoId id) {
+	public static final Photo getPhoto(PhotoId id) throws PhotoNotFoundException {
 		return instance.getPhotoFromId(id);
 	}
 	
@@ -103,9 +107,9 @@ public class PhotoManager extends ObjectManager {
 	/**
 	 * 
 	 */
-	public Photo getPhotoFromId(PhotoId id) {
+	public Photo getPhotoFromId(PhotoId id) throws PhotoNotFoundException {
 		if (id.isNullId()) {
-			return null;
+			throw new PhotoNotFoundException(id);
 		}
 
 		Photo result = doGetPhotoFromId(id);
@@ -116,6 +120,7 @@ public class PhotoManager extends ObjectManager {
 				result = (Photo) readObject(stmt, id.asInt());
 			} catch (SQLException sex) {
 				SysLog.logThrowable(sex);
+				throw new PhotoNotFoundException(id, sex);
 			}
 			if (result != null) {
 				doAddPhoto(result);
@@ -233,33 +238,35 @@ public class PhotoManager extends ObjectManager {
 	/**
 	 * 
 	 */
-	public Photo getVisiblePhoto(PhotoFilter filter) {
-		Photo result = getPhotoFromFilter(filter);
-		
-		if(result == null) {
+	public Photo getVisiblePhoto(PhotoFilter filter) throws NoPhotoMatchesFilterException {
+		try {
+			return getPhotoFromFilter(filter);
+		} catch(NoPhotoMatchesFilterException e) {
 			java.util.List<PhotoId> list = getFilteredPhotoIds(filter);
 			filter.setDisplayablePhotoIds(list);
-			result = getPhotoFromFilter(filter);
+			return getPhotoFromFilter(filter);
 		}
-
-		return result;
 	}
 	
 	/**
 	 * 
 	 */
-	protected Photo getPhotoFromFilter(PhotoFilter filter) {
-		PhotoId id = filter.getRandomDisplayablePhotoId();
-		Photo result = getPhotoFromId(id);
-		while((result != null) && !result.isVisible()) {
-			id = filter.getRandomDisplayablePhotoId();
-			result = getPhotoFromId(id);
-			if ((result != null) && !result.isVisible()) {
-				filter.addProcessedPhoto(result);
+	protected Photo getPhotoFromFilter(PhotoFilter filter) throws NoPhotoMatchesFilterException {
+		try {
+			PhotoId id = filter.getRandomDisplayablePhotoId();
+			Photo result = getPhotoFromId(id);
+			while(!result.isVisible()) {
+				id = filter.getRandomDisplayablePhotoId();
+				result = getPhotoFromId(id);
+				if (!result.isVisible()) {
+					filter.addProcessedPhoto(result);
+				}
 			}
+			
+			return result;
+		} catch(PhotoNotFoundException e) {
+			throw new NoPhotoMatchesFilterException(filter, e.getCause());
 		}
-		
-		return result;
 	}
 	
 	/**
@@ -359,5 +366,57 @@ public class PhotoManager extends ObjectManager {
 			throw new IllegalStateException("Photo already exists!");
 		}
 	}
+	
+	/**
+	 * 
+	 */
+	public static class PhotoNotFoundException extends Exception {
+		private static final long serialVersionUID = -1051890570071191390L;
 
+		private PhotoId id;
+
+		public PhotoNotFoundException(PhotoId id, SQLException cause) {
+			super("Photo " + id.toString() + " not found", cause);
+			this.id = id;
+		}
+		
+		public PhotoNotFoundException(PhotoId id) {
+			super("Photo " + id.toString() + " not found");
+			this.id = id;
+		}
+
+		public PhotoId getId() {
+			return id;
+		}
+		
+		@Override
+		public synchronized SQLException getCause() {
+			return (SQLException) super.getCause();
+		}
+		
+	}
+	
+	/**
+	 * 
+	 */
+	public static class NoPhotoMatchesFilterException extends Exception {
+		private static final long serialVersionUID = -3134176764971224009L;
+
+		private PhotoFilter filter;
+		
+		public NoPhotoMatchesFilterException(PhotoFilter filter, SQLException cause) {
+			super("No photo matches the filter", cause);
+			this.filter = filter;
+		}
+		
+		public PhotoFilter getFilter() {
+			return filter;
+		}
+		
+		@Override
+		public synchronized SQLException getCause() {
+			return (SQLException) super.getCause();
+		}
+		
+	}
 }

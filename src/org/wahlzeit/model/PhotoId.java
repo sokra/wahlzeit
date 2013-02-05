@@ -247,5 +247,10 @@ public class PhotoId {
 
 		return result;
 	}
+
+	@Override
+	public String toString() {
+		return stringValue;
+	}
 	
 }

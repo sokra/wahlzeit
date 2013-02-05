@@ -670,6 +670,13 @@ public abstract class AbstractModelConfig extends AbstractConfig implements Mode
 	public String getNotifyAboutPraiseEmailPostScriptum() {
 		return doGetValue("NotifyAboutPraiseEmailPostScriptum"); 
 	}
+	
+	/**
+	 * 
+	 */
+	public String getReadWriteError() {
+		return doGetValue("ReadWriteError");
+	}
 
 	/**
 	 * 

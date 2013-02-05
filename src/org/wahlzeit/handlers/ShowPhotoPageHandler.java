@@ -23,6 +23,8 @@ package org.wahlzeit.handlers;
 import java.util.*;
 
 import org.wahlzeit.model.*;
+import org.wahlzeit.model.PhotoManager.NoPhotoMatchesFilterException;
+import org.wahlzeit.model.PhotoManager.PhotoNotFoundException;
 import org.wahlzeit.services.*;
 import org.wahlzeit.utils.*;
 import org.wahlzeit.webparts.*;
@@ -49,23 +51,34 @@ public class ShowPhotoPageHandler extends AbstractWebPageHandler implements WebF
 		
 		String arg = ctx.getAsString(args, "prior");
 		if (!StringUtil.isNullOrEmptyString(arg)) {
-			ctx.setPriorPhoto(PhotoManager.getPhoto(arg));
-		}
-		
-		if (!link.equals(PartUtil.SHOW_PHOTO_PAGE_NAME)) {
-			photo = PhotoManager.getPhoto(link);
-		}
-		
-		if (photo == null) {
-			PhotoManager photoManager = PhotoManager.getInstance();
-			PhotoFilter filter = ctx.getPhotoFilter();
-			photo = photoManager.getVisiblePhoto(filter);
-			if (photo != null) {
-				link = photo.getId().asString();
+			try {
+				ctx.setPriorPhoto(PhotoManager.getPhoto(arg));
+			} catch (PhotoNotFoundException e) {
+				// We can ignore this error and display no prior photo
 			}
 		}
+		
+		if (!link.equals(PartUtil.SHOW_PHOTO_PAGE_NAME) && !link.isEmpty()) {
+			try {
+				photo = PhotoManager.getPhoto(link);
 
-		ctx.setPhoto(photo);
+				ctx.setPhoto(photo);
+			} catch (PhotoNotFoundException e) {
+				// Critical error: Notify the user about it.
+				ctx.setMessage(e.getMessage());
+			}
+
+		} else {
+			PhotoManager photoManager = PhotoManager.getInstance();
+			PhotoFilter filter = ctx.getPhotoFilter();
+			try {
+				photo = photoManager.getVisiblePhoto(filter);
+				// redirect the user to this photo
+				link = photo.getId().asString();
+			} catch (NoPhotoMatchesFilterException e) {
+				// All photos visited
+			}
+		}
 		
 		return link;
 	}
@@ -81,24 +94,38 @@ public class ShowPhotoPageHandler extends AbstractWebPageHandler implements WebF
 	 * 
 	 */
 	protected void makeWebPageBody(UserSession ctx, WebPart page) {
-		Photo photo = ctx.getPhoto();
-
 		makeLeftSidebar(ctx, page);
-
-		makePhoto(ctx, page);
 		
-		if (photo != null && photo.isVisible()) {
-			makePhotoCaption(ctx, page);
-			makeEngageGuest(ctx, page);
+		String message = ctx.getMessage();
+		
+		if (message != null) {
+			PhotoSize pagePhotoSize = ctx.getPhotoSize();
+			
+			page.addString("mainWidth", String.valueOf(pagePhotoSize.getMaxPhotoWidth()));
+			WebPart error = createWebPart(ctx, PartUtil.ERROR_INFO_FILE);
+			error.addString("message", message);
+			page.addWritable(Photo.IMAGE, error);
+			
+		} else {
 
-			String photoId = photo.getId().asString();
-			page.addString(Photo.ID, photoId);
-
-			Tags tags = photo.getTags();
-			page.addString(Photo.DESCRIPTION, getPhotoSummary(ctx, photo));
-			page.addString(Photo.KEYWORDS, tags.asString(false, ','));
-
-			ctx.addDisplayedPhoto(photo);
+			Photo photo = ctx.getPhoto();
+	
+			makePhoto(ctx, page);
+			
+			if (photo != null && photo.isVisible()) {
+				makePhotoCaption(ctx, page);
+				makeEngageGuest(ctx, page);
+	
+				String photoId = photo.getId().asString();
+				page.addString(Photo.ID, photoId);
+	
+				Tags tags = photo.getTags();
+				page.addString(Photo.DESCRIPTION, getPhotoSummary(ctx, photo));
+				page.addString(Photo.KEYWORDS, tags.asString(false, ','));
+	
+				ctx.addDisplayedPhoto(photo);
+			}
+			
 		}
 		
 		makeRightSidebar(ctx, page);

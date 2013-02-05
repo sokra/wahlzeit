@@ -24,6 +24,7 @@ import java.util.*;
 import java.net.*;
 import java.sql.*;
 
+import org.wahlzeit.model.PhotoManager.PhotoNotFoundException;
 import org.wahlzeit.services.*;
 import org.wahlzeit.utils.*;
 
@@ -220,7 +221,11 @@ public class User extends Client implements Persistent {
 		status = UserStatus.getFromInt(rset.getInt("status"));
 		confirmationCode = rset.getLong("confirmation_code");
 		photos = PhotoManager.getInstance().findPhotosByOwner(name);
-		userPhoto = PhotoManager.getPhoto(PhotoId.getId(rset.getInt("photo")));
+		try {
+			userPhoto = PhotoManager.getPhoto(PhotoId.getId(rset.getInt("photo")));
+		} catch (PhotoNotFoundException e) {
+			throw e.getCause();
+		}
 		creationTime = rset.getLong("creation_time");
 	}
 	

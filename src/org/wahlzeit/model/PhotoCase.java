@@ -22,6 +22,8 @@ package org.wahlzeit.model;
 
 import java.sql.*;
 
+import org.wahlzeit.model.PhotoManager.PhotoNotFoundException;
+
 
 /**
  * A photo case is a case where someone flagged a photo as inappropriate.
@@ -83,7 +85,11 @@ public class PhotoCase extends Case {
 	 */
 	public void readFrom(ResultSet rset) throws SQLException {
 		id = new CaseId(rset.getInt("id"));
-		photo = PhotoManager.getPhoto(PhotoId.getId(rset.getInt("photo")));
+		try {
+			photo = PhotoManager.getPhoto(PhotoId.getId(rset.getInt("photo")));
+		} catch (PhotoNotFoundException e) {
+			throw e.getCause();
+		}
 		createdOn = rset.getLong("creation_time");
 		
 		flagger = rset.getString("flagger");
